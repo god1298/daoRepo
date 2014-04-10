@@ -50,23 +50,35 @@ public class CreateFileUtil {
 		}
 		File daoImplFile = new File(daoImplFilePath);
 		if (daoImplFile.exists()) {
-			daoImplFile.deleteOnExit();
+			daoImplFile.delete();
 			System.out.println(daoImplFile + " is delete!");
 //			System.out.println(daoImplFilePath + " is exist!");
 //			return;
 		}
 		
-		FileOutputStream fos = null;
+		FileOutputStream entityFos = null;
+		FileOutputStream daoFos = null;
+		FileOutputStream daoImplFos = null;
 		try {
-			fos = new FileOutputStream(entityFile);
-			
-			fos.write(fillContent4Entity(tablename, conn).toString().getBytes(charset));
-			fos.flush();
-		} finally {
-			if (fos != null)
-				fos.close();
+			entityFos = new FileOutputStream(entityFile);
+			entityFos.write(fillContent4Entity(tablename, conn).toString().getBytes(charset));
+			daoImplFos = new FileOutputStream(daoImplFile);
+			daoImplFos.write(fillContent4DaoImpl(tablename, conn).toString().getBytes(charset));
+			daoFos = new FileOutputStream(daoFile);
+			daoFos.write(fillContent4Dao(tablename, conn).toString().getBytes(charset));
+			entityFos.flush();
+			daoFos.flush();
+			daoImplFos.flush();
+		} catch(Exception e){
+			e.printStackTrace();
+		}finally {
+			if (entityFos != null)entityFos.close();
+			if (daoFos != null)daoFos.close();
+			if (daoImplFos != null)daoImplFos.close();
 		}
 		System.out.println("create " + entityFile + " successful");
+		System.out.println("create " + daoFile + " successful");
+		System.out.println("create " + daoImplFile + " successful");
 	}
 	
 	static String fillContent4Entity(String tablename, Connection conn) throws SQLException {
@@ -149,23 +161,57 @@ public class CreateFileUtil {
 	}
 	
 	
-	static String fillContent4DaoImpl(String tablename, Connection conn) throws SQLException {
+	static String fillContent4DaoImpl(String tablename, Connection conn) throws Exception {
 		String sql = "select * from " + tablename + " limit 1";
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		ResultSet rs = conn.prepareStatement(sql).executeQuery();
-		StringBuilder entitySb = new StringBuilder();
-		entitySb.append("import java.io.Serializable;").append("\n");
-		entitySb.append("\n");
-		entitySb.append("/**").append("\n");
-		entitySb.append(" * @date " + Utils.dateFormat() + "  entity for table ").append(tablename).append("\n");
-		entitySb.append(" */").append("\n");
+		StringBuilder daoSb = new StringBuilder();
+		daoSb.append("\n");
+		daoSb.append("/**").append("\n");
+		daoSb.append(" * @date " + Utils.dateFormat() + "  dao for table ").append(tablename).append("\n");
+		daoSb.append(" */").append("\n");
 	
-		entitySb.append("public class " + Tablename  + "DaoImpl implements ").append(Tablename+"Dao").append("{\n");
-		entitySb.append("\n");
-		entitySb.append("\tpublic int insert").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+"){\n");
-		entitySb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
-		entitySb.append("\t\tsql.append(\"insert into "+tablename+"\n");
-		entitySb.append("\t\t(");
+		daoSb.append("public class " + Tablename  + "DaoImpl implements ").append(Tablename+"Dao").append("{\n\n");
+		daoSb.append(fillContent4getCountByCondition(tablename, rs));
+		daoSb.append(fillContent4FindByCondition(tablename, rs));
+		daoSb.append(fillContent4FindById(tablename, rs));
+		daoSb.append(fillContent4FindByIdInt(tablename, rs));
+		daoSb.append(fillContent4Insert(tablename, rs));
+		daoSb.append(fillContent4Update(tablename, rs));
+		daoSb.append(fillContent4Delete(tablename, rs));
+		daoSb.append("}");
+		String content = daoSb.toString();
+		return content;
+	}
+	
+	static String fillContent4Dao(String tablename, Connection conn) throws Exception {
+		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
+		StringBuilder daoSb = new StringBuilder();
+		daoSb.append("\n");
+		daoSb.append("/**").append("\n");
+		daoSb.append(" * @date " + Utils.dateFormat() + "  dao for table ").append(tablename).append("\n");
+		daoSb.append(" */").append("\n");
+	
+		daoSb.append("public interface " + Tablename  + "Dao").append("{\n\n");
+		daoSb.append("\tpublic int get").append(Tablename+"Count").append("(Map<String, Object> condition)throws Exception;\n");
+		daoSb.append("\tpublic List<Map<String, Object>> find").append(Tablename+"byCondition").append("(Map<String, Object> condition)throws Exception;\n");
+		daoSb.append("\tpublic "+Tablename+" find").append(Tablename+"byId").append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
+		daoSb.append("\tpublic "+Tablename+" find").append(Tablename+"byId").append("(int id)throws Exception;\n");
+		daoSb.append("\tpublic int insert").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
+		daoSb.append("\tpublic int update").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
+		daoSb.append("\tpublic int delete").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
+		daoSb.append("}");
+		String content = daoSb.toString();
+		return content;
+	}
+	
+	static String fillContent4Insert(String tablename, ResultSet rs)throws Exception{
+		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
+		StringBuilder insertSb = new StringBuilder();
+		insertSb.append("\tpublic int insert").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception{\n");
+		insertSb.append("\t\tint rowCount = 0;\n");
+		insertSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
+		insertSb.append("\t\tsql.append(\"insert into "+tablename+"\");\n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder sbKey = new StringBuilder();
 		StringBuilder sbValue = new StringBuilder();
@@ -176,14 +222,150 @@ public class CreateFileUtil {
 		}
 		sbKey.deleteCharAt(sbKey.length()-1);
 		sbValue.deleteCharAt(sbValue.length()-1);
-		entitySb.append(sbKey.toString()).append(")\n");
-		entitySb.append("\t\tvalues\n");
-		entitySb.append("\t\t(").append(sbValue.toString()).append(")\n");
-		entitySb.append("\t\t");
-		entitySb.append("}");
-		String content = entitySb.toString();
-		return content;
+		insertSb.append("\t\tsql.append(\"("+sbKey.toString()).append(")\");\n");
+		insertSb.append("\t\tsql.append(\" values\");\n");
+		insertSb.append("\t\tsql.append(\"(").append(sbValue.toString()).append(")\");\n");
+		insertSb.append("\t\trowCount = jdbcTemplate.update(sql.toString(), new BeanPropertySqlParameterSource("+Utils.lowerFirstChar(Tablename)+"));\n");
+		insertSb.append("\t\treturn rowCount;\n");
+		insertSb.append("\t}\n\n");
+		return insertSb.toString();
 	}
+	
+	static String fillContent4Update(String tablename, ResultSet rs)throws Exception{
+		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
+		StringBuilder updateSb = new StringBuilder();
+		updateSb.append("\tpublic int update").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception{\n");
+		updateSb.append("\t\tint rowCount = 0;\n");
+		updateSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
+		updateSb.append("\t\tsql.append(\"update "+tablename+" set \");\n");
+		ResultSetMetaData meta = rs.getMetaData();
+		StringBuilder sb = new StringBuilder();
+		StringBuilder whereSb = new StringBuilder();
+		for (int i = 1; i <= meta.getColumnCount(); i++) {
+			String fileName = Utils.delUnderline(meta.getColumnName(i));
+			sb.append(fileName+"=:"+fileName+",");
+			if(i<3){
+				whereSb.append(" and "+fileName+"=:"+fileName);
+			}
+		}
+		sb.deleteCharAt(sb.length()-1);
+		updateSb.append("\t\tsql.append(\""+sb+"\");\n");
+		updateSb.append("\t\tsql.append(\" where 1=1 \");\n");
+		updateSb.append("\t\tsql.append(\""+whereSb+"\");\n");
+		updateSb.append("\t\trowCount = jdbcTemplate.update(sql.toString(), new BeanPropertySqlParameterSource("+Utils.lowerFirstChar(Tablename)+"));\n");
+		updateSb.append("\t\treturn rowCount;\n");
+		updateSb.append("\t}\n\n");
+		return updateSb.toString();
+	}
+	
+	static String fillContent4Delete(String tablename, ResultSet rs)throws Exception{
+		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
+		StringBuilder deleteSb = new StringBuilder();
+		deleteSb.append("\tpublic int delete").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception{\n");
+		deleteSb.append("\t\tint rowCount = 0;\n");
+		deleteSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
+		deleteSb.append("\t\tsql.append(\"delete from "+tablename+" where 1=1 \");\n");
+		ResultSetMetaData meta = rs.getMetaData();
+		StringBuilder sb = new StringBuilder();
+		for (int i = 1; i <= meta.getColumnCount(); i++) {
+			String fileName = Utils.delUnderline(meta.getColumnName(i));
+			sb.append(" and "+fileName+"=:"+fileName);
+			if(i>=2){
+				break;
+			}
+		}
+		deleteSb.append("\t\tsql.append(\""+sb).append("\");\n");
+		deleteSb.append("\t\trowCount = jdbcTemplate.update(sql.toString(), new BeanPropertySqlParameterSource("+Utils.lowerFirstChar(Tablename)+"));\n");
+		deleteSb.append("\t\treturn rowCount;\n");
+		deleteSb.append("\t}\n\n");
+		return deleteSb.toString();
+	}
+	
+	static String fillContent4FindById(String tablename, ResultSet rs)throws Exception{
+		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
+		StringBuilder findSb = new StringBuilder();
+		findSb.append("\tpublic "+Tablename+" find").append(Tablename+"byId").append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception{\n");
+		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
+		findSb.append("\t\tsql.append(\"select * from "+tablename+" where 1=1 ");
+		ResultSetMetaData meta = rs.getMetaData();
+		StringBuilder whereSb = new StringBuilder();
+		StringBuilder valueSb = new StringBuilder();
+		for (int i = 1; i <= meta.getColumnCount(); i++) {
+			String fileName = Utils.delUnderline(meta.getColumnName(i));
+			if(i<3){
+				whereSb.append(" and "+fileName+"=:"+fileName);
+				valueSb.append("\t\tnamedParameters.put(\""+fileName+"\","+fileName+");\n");
+			}
+		}
+		findSb.append(whereSb).append("\");\n");
+		findSb.append("\t\tMap namedParameters = new HashMap();\n");
+		findSb.append(valueSb);
+		findSb.append("\t\treturn jdbcTemplate.queryForObject(sql.toString(), namedParameters, new BeanPropertyRowMapper<"+Tablename+">("+Tablename+".class));\n");
+		findSb.append("\t}\n\n");
+		return findSb.toString();
+	}
+	
+	
+	static String fillContent4FindByIdInt(String tablename, ResultSet rs)throws Exception{
+		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
+		StringBuilder findSb = new StringBuilder();
+		findSb.append("\tpublic "+Tablename+" find").append(Tablename+"byId").append("(int id)throws Exception{\n");
+		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
+		findSb.append("\t\tsql.append(\"select * from "+tablename+" where 1=1 ");
+		StringBuilder whereSb = new StringBuilder();
+		findSb.append(whereSb).append("\");\n");
+		findSb.append("\t\tMap namedParameters = new HashMap();\n");
+		findSb.append("\t\tnamedParameters.put(\"###\",\"###\");\n");
+		findSb.append("\t\treturn jdbcTemplate.queryForObject(sql.toString(), namedParameters, new BeanPropertyRowMapper<"+Tablename+">("+Tablename+".class));\n");
+		findSb.append("\t}\n\n");
+		return findSb.toString();
+	}
+	
+	static String fillContent4FindByCondition(String tablename, ResultSet rs)throws Exception{
+		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
+		StringBuilder findSb = new StringBuilder();
+		findSb.append("\tpublic List<Map<String, Object>> find").append(Tablename+"byCondition").append("(Map<String, Object> condition)throws Exception{\n");
+		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
+		findSb.append("\t\tsql.append(\"select * from "+tablename+" where 1=1 \");\n");
+		ResultSetMetaData meta = rs.getMetaData();
+		StringBuilder whereSb = new StringBuilder();
+		for (int i = 1; i <= meta.getColumnCount(); i++) {
+			String fileName = Utils.delUnderline(meta.getColumnName(i));
+			whereSb.append("\t\tif(condition.get(\""+fileName+"\") != null){\n");
+			whereSb.append("\t\t\tsql.append(\" and "+fileName+"=\").append(condition.get("+fileName+").toString());\n");
+			whereSb.append("\t\t}\n");
+		}
+		whereSb.append("\t\tif(condition.get(\"limit\") != null){\n");
+		whereSb.append("\t\t\tsql.append(\" limit \").append(condition.get(\"rowOffset\").append(\",\").append(condition.get(\"pageSize\"));\n");
+		whereSb.append("\t\t}\n");
+		findSb.append(whereSb);
+		findSb.append("\t\treturn jdbcTemplate.getJdbcOperations().queryForList(sql.toString());\n");
+		findSb.append("\t}\n\n");
+		return findSb.toString();
+	}
+	
+	static String fillContent4getCountByCondition(String tablename, ResultSet rs)throws Exception{
+		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
+		StringBuilder findSb = new StringBuilder();
+		findSb.append("\tpublic int get").append(Tablename+"Count").append("(Map<String, Object> condition)throws Exception{\n");
+		findSb.append("\t\tint rowCount = 0;\n"); 
+		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
+		findSb.append("\t\tsql.append(\"select count(1) from "+tablename+" where 1=1 \");\n");
+		ResultSetMetaData meta = rs.getMetaData();
+		StringBuilder whereSb = new StringBuilder();
+		for (int i = 1; i <= meta.getColumnCount(); i++) {
+			String fileName = Utils.delUnderline(meta.getColumnName(i));
+			whereSb.append("\t\tif(condition.get(\""+fileName+"\") != null){\n");
+			whereSb.append("\t\t\tsql.append(\" and "+fileName+"=\").append(condition.get("+fileName+").toString());\n");
+			whereSb.append("\t\t}\n");
+		}
+		findSb.append(whereSb);
+		findSb.append("\t\trowCount = jdbcTemplate.getJdbcOperations().queryForObject(sql.toString(), Integer.class);\n");
+		findSb.append("\t\treturn rowCount;\n");
+		findSb.append("\t}\n\n");
+		return findSb.toString();
+	}
+	
 	
 	static String type2String(int javaType) {
 		switch (javaType) {
