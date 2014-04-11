@@ -172,7 +172,7 @@ public class CreateFileUtil {
 		daoSb.append(" */").append("\n");
 	
 		daoSb.append("public class " + Tablename  + "DaoImpl implements ").append(Tablename+"Dao").append("{\n\n");
-		daoSb.append(fillContent4getCountByCondition(tablename, rs));
+		daoSb.append(fillContent4GetCountByCondition(tablename, rs));
 		daoSb.append(fillContent4FindByCondition(tablename, rs));
 		daoSb.append(fillContent4FindById(tablename, rs));
 		daoSb.append(fillContent4FindByIdInt(tablename, rs));
@@ -332,11 +332,11 @@ public class CreateFileUtil {
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
 			String fileName = Utils.delUnderline(meta.getColumnName(i));
 			whereSb.append("\t\tif(condition.get(\""+fileName+"\") != null){\n");
-			whereSb.append("\t\t\tsql.append(\" and "+fileName+"=\").append(condition.get("+fileName+").toString());\n");
+			whereSb.append("\t\t\tsql.append(\" and "+fileName+"=\").append(condition.get(\""+fileName+"\").toString());\n");
 			whereSb.append("\t\t}\n");
 		}
 		whereSb.append("\t\tif(condition.get(\"limit\") != null){\n");
-		whereSb.append("\t\t\tsql.append(\" limit \").append(condition.get(\"rowOffset\").append(\",\").append(condition.get(\"pageSize\"));\n");
+		whereSb.append("\t\t\tsql.append(\" limit \").append(condition.get(\"rowOffset\")).append(\",\").append(condition.get(\"pageSize\"));\n");
 		whereSb.append("\t\t}\n");
 		findSb.append(whereSb);
 		findSb.append("\t\treturn jdbcTemplate.getJdbcOperations().queryForList(sql.toString());\n");
@@ -344,7 +344,7 @@ public class CreateFileUtil {
 		return findSb.toString();
 	}
 	
-	static String fillContent4getCountByCondition(String tablename, ResultSet rs)throws Exception{
+	static String fillContent4GetCountByCondition(String tablename, ResultSet rs)throws Exception{
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		StringBuilder findSb = new StringBuilder();
 		findSb.append("\tpublic int get").append(Tablename+"Count").append("(Map<String, Object> condition)throws Exception{\n");
@@ -356,7 +356,7 @@ public class CreateFileUtil {
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
 			String fileName = Utils.delUnderline(meta.getColumnName(i));
 			whereSb.append("\t\tif(condition.get(\""+fileName+"\") != null){\n");
-			whereSb.append("\t\t\tsql.append(\" and "+fileName+"=\").append(condition.get("+fileName+").toString());\n");
+			whereSb.append("\t\t\tsql.append(\" and "+fileName+"=\").append(condition.get(\""+fileName+"\").toString());\n");
 			whereSb.append("\t\t}\n");
 		}
 		findSb.append(whereSb);
@@ -426,8 +426,10 @@ public class CreateFileUtil {
 	
 	public static void main(String[] args) throws Exception {
 		Class.forName("com.mysql.jdbc.Driver");
-		Connection conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
-		CreateFileUtil.createFile("Student", "", conn, "utf-8");
+//		Connection conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
+//		CreateFileUtil.createFile("Student", "", conn, "utf-8");
+		Connection conn = DriverManager.getConnection("jdbc:mysql://192.168.6.96:3306/ddpa_dev", "ddpa1008T", "ddpa@*Dc67");
+		CreateFileUtil.createFile("fund_trade", "", conn, "utf-8");
 	}
 
 }
