@@ -170,8 +170,10 @@ public class CreateFileUtil {
 		daoSb.append("/**").append("\n");
 		daoSb.append(" * @date " + Utils.dateFormat() + "  dao for table ").append(tablename).append("\n");
 		daoSb.append(" */").append("\n");
-	
+		daoSb.append("@Repository(\""+Utils.delUnderline(tablename)+"Dao\")\n");
 		daoSb.append("public class " + Tablename  + "DaoImpl implements ").append(Tablename+"Dao").append("{\n\n");
+		daoSb.append("/t@Resource");
+		daoSb.append("/tprivate JdbcTemplate jdbcTemplate;");
 		daoSb.append(fillContent4GetCountByCondition(tablename, rs));
 		daoSb.append(fillContent4FindByCondition(tablename, rs));
 		daoSb.append(fillContent4FindById(tablename, rs));
@@ -216,8 +218,9 @@ public class CreateFileUtil {
 		StringBuilder sbKey = new StringBuilder();
 		StringBuilder sbValue = new StringBuilder();
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
-			String fileName = Utils.delUnderline(meta.getColumnName(i));
-			sbKey.append(fileName+",");
+			String columnName = meta.getColumnName(i);
+			String fileName = Utils.delUnderline(columnName);
+			sbKey.append(columnName+",");
 			sbValue.append(":"+fileName+",");
 		}
 		sbKey.deleteCharAt(sbKey.length()-1);
@@ -268,8 +271,9 @@ public class CreateFileUtil {
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder sb = new StringBuilder();
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
-			String fileName = Utils.delUnderline(meta.getColumnName(i));
-			sb.append(" and "+fileName+"=:"+fileName);
+			String columnName = meta.getColumnName(i);
+			String fileName = Utils.delUnderline(columnName);
+			sb.append(" and "+columnName+"=:"+fileName);
 			if(i>=2){
 				break;
 			}
@@ -284,16 +288,17 @@ public class CreateFileUtil {
 	static String fillContent4FindById(String tablename, ResultSet rs)throws Exception{
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		StringBuilder findSb = new StringBuilder();
-		findSb.append("\tpublic "+Tablename+" find").append(Tablename+"byId").append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception{\n");
+		findSb.append("\tpublic "+Tablename+" find").append(Tablename+"ById").append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception{\n");
 		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
 		findSb.append("\t\tsql.append(\"select * from "+tablename+" where 1=1 ");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder whereSb = new StringBuilder();
 		StringBuilder valueSb = new StringBuilder();
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
-			String fileName = Utils.delUnderline(meta.getColumnName(i));
+			String columnName = meta.getColumnName(i);
+			String fileName = Utils.delUnderline(columnName);
 			if(i<3){
-				whereSb.append(" and "+fileName+"=:"+fileName);
+				whereSb.append(" and "+columnName+"=:"+fileName);
 				valueSb.append("\t\tnamedParameters.put(\""+fileName+"\","+fileName+");\n");
 			}
 		}
@@ -324,15 +329,16 @@ public class CreateFileUtil {
 	static String fillContent4FindByCondition(String tablename, ResultSet rs)throws Exception{
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		StringBuilder findSb = new StringBuilder();
-		findSb.append("\tpublic List<Map<String, Object>> find").append(Tablename+"byCondition").append("(Map<String, Object> condition)throws Exception{\n");
+		findSb.append("\tpublic List<Map<String, Object>> find").append(Tablename+"ByCondition").append("(Map<String, Object> condition)throws Exception{\n");
 		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
 		findSb.append("\t\tsql.append(\"select * from "+tablename+" where 1=1 \");\n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder whereSb = new StringBuilder();
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
-			String fileName = Utils.delUnderline(meta.getColumnName(i));
+			String columnName = meta.getColumnName(i);
+			String fileName = Utils.delUnderline(columnName);
 			whereSb.append("\t\tif(condition.get(\""+fileName+"\") != null){\n");
-			whereSb.append("\t\t\tsql.append(\" and "+fileName+"=\").append(condition.get(\""+fileName+"\").toString());\n");
+			whereSb.append("\t\t\tsql.append(\" and "+columnName+"=\").append(condition.get(\""+fileName+"\").toString());\n");
 			whereSb.append("\t\t}\n");
 		}
 		whereSb.append("\t\tif(condition.get(\"limit\") != null){\n");
@@ -354,9 +360,10 @@ public class CreateFileUtil {
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder whereSb = new StringBuilder();
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
-			String fileName = Utils.delUnderline(meta.getColumnName(i));
+			String columnName = meta.getColumnName(i);
+			String fileName = Utils.delUnderline(columnName);
 			whereSb.append("\t\tif(condition.get(\""+fileName+"\") != null){\n");
-			whereSb.append("\t\t\tsql.append(\" and "+fileName+"=\").append(condition.get(\""+fileName+"\").toString());\n");
+			whereSb.append("\t\t\tsql.append(\" and "+columnName+"=\").append(condition.get(\""+fileName+"\").toString());\n");
 			whereSb.append("\t\t}\n");
 		}
 		findSb.append(whereSb);
@@ -426,10 +433,10 @@ public class CreateFileUtil {
 	
 	public static void main(String[] args) throws Exception {
 		Class.forName("com.mysql.jdbc.Driver");
-//		Connection conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
-//		CreateFileUtil.createFile("Student", "", conn, "utf-8");
-		Connection conn = DriverManager.getConnection("jdbc:mysql://192.168.6.96:3306/ddpa_dev", "ddpa1008T", "ddpa@*Dc67");
-		CreateFileUtil.createFile("fund_trade", "", conn, "utf-8");
+		Connection conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
+		CreateFileUtil.createFile("Student", "", conn, "utf-8");
+//		Connection conn = DriverManager.getConnection("jdbc:mysql://192.168.6.96:3306/ddpa_dev", "ddpa1008T", "ddpa@*Dc67");
+//		CreateFileUtil.createFile("fund_trade", "", conn, "utf-8");
 	}
 
 }
