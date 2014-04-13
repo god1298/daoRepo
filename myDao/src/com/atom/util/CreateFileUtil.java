@@ -172,8 +172,8 @@ public class CreateFileUtil {
 		daoSb.append(" */").append("\n");
 		daoSb.append("@Repository(\""+Utils.delUnderline(tablename)+"Dao\")\n");
 		daoSb.append("public class " + Tablename  + "DaoImpl implements ").append(Tablename+"Dao").append("{\n\n");
-		daoSb.append("/t@Resource");
-		daoSb.append("/tprivate JdbcTemplate jdbcTemplate;");
+		daoSb.append("\t@Resource\n");
+		daoSb.append("\tprivate JdbcTemplate jdbcTemplate;\n\n");
 		daoSb.append(fillContent4GetCountByCondition(tablename, rs));
 		daoSb.append(fillContent4FindByCondition(tablename, rs));
 		daoSb.append(fillContent4FindById(tablename, rs));
@@ -245,10 +245,11 @@ public class CreateFileUtil {
 		StringBuilder sb = new StringBuilder();
 		StringBuilder whereSb = new StringBuilder();
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
-			String fileName = Utils.delUnderline(meta.getColumnName(i));
-			sb.append(fileName+"=:"+fileName+",");
+			String columnName = meta.getColumnName(i);
+			String fileName = Utils.delUnderline(columnName);
+			sb.append(columnName+"=:"+fileName+",");
 			if(i<3){
-				whereSb.append(" and "+fileName+"=:"+fileName);
+				whereSb.append(" and "+columnName+"=:"+fileName);
 			}
 		}
 		sb.deleteCharAt(sb.length()-1);
