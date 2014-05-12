@@ -11,6 +11,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 
+
 public class CreateFileUtil {
 	
 	/**
@@ -34,12 +35,14 @@ public class CreateFileUtil {
 		String daoImplFilePath = curdir + File.separator + Utils.upperFirstChar(Utils.delUnderline(tablename)) + "DaoImpl.java";
 		String daoFilePath = curdir + File.separator + Utils.upperFirstChar(Utils.delUnderline(tablename)) + "Dao.java";
 		
+		String serviceImplFilePath = curdir + File.separator + Utils.upperFirstChar(Utils.delUnderline(tablename)) + "ServiceImpl.java";
+		
 		File entityFile = new File(entityFilePath);
 		if (entityFile.exists()) {
 			entityFile.delete();
 			System.out.println(entityFile + " is delete!");
 			// System.out.println(entityFilePath + " is exist!");
-			// return;
+			// return; 
 		}
 		File daoFile = new File(daoFilePath);
 		if (daoFile.exists()) {
@@ -56,29 +59,48 @@ public class CreateFileUtil {
 //			return;
 		}
 		
+		File serviceImplFile = new File(serviceImplFilePath);
+		if (serviceImplFile.exists()) {
+			serviceImplFile.delete();
+			System.out.println(serviceImplFile + " is delete!");
+//			System.out.println(daoImplFilePath + " is exist!");
+//			return;
+		}
+		
 		FileOutputStream entityFos = null;
 		FileOutputStream daoFos = null;
 		FileOutputStream daoImplFos = null;
+		
+		FileOutputStream serviceImplFos = null;
 		try {
 			entityFos = new FileOutputStream(entityFile);
 			entityFos.write(fillContent4Entity(tablename, conn).toString().getBytes(charset));
+			
 			daoImplFos = new FileOutputStream(daoImplFile);
 			daoImplFos.write(fillContent4DaoImpl(tablename, conn).toString().getBytes(charset));
+			
 			daoFos = new FileOutputStream(daoFile);
 			daoFos.write(fillContent4Dao(tablename, conn).toString().getBytes(charset));
+			
+			serviceImplFos = new FileOutputStream(serviceImplFile);
+			serviceImplFos.write(fillContent4ServiceImpl(tablename, conn).toString().getBytes(charset));
+			
 			entityFos.flush();
 			daoFos.flush();
 			daoImplFos.flush();
+			serviceImplFos.flush();
 		} catch(Exception e){
 			e.printStackTrace();
 		}finally {
 			if (entityFos != null)entityFos.close();
 			if (daoFos != null)daoFos.close();
 			if (daoImplFos != null)daoImplFos.close();
+			if (serviceImplFos != null)serviceImplFos.close();
 		}
 		System.out.println("create " + entityFile + " successful");
 		System.out.println("create " + daoFile + " successful");
 		System.out.println("create " + daoImplFile + " successful");
+		System.out.println("create " + serviceImplFile + " successful");
 	}
 	
 	static String fillContent4Entity(String tablename, Connection conn) throws SQLException {
@@ -167,13 +189,19 @@ public class CreateFileUtil {
 		ResultSet rs = conn.prepareStatement(sql).executeQuery();
 		StringBuilder daoSb = new StringBuilder();
 		daoSb.append("\n");
+		daoSb.append("import java.util.List;\n");
+		daoSb.append("import java.util.Map;\n");
+		daoSb.append("import javax.annotation.Resource;\n");
+		daoSb.append("import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;\n");
+		daoSb.append("import org.springframework.stereotype.Repository;\n");
+		daoSb.append("\n");
 		daoSb.append("/**").append("\n");
 		daoSb.append(" * @date " + Utils.dateFormat() + "  dao for table ").append(tablename).append("\n");
 		daoSb.append(" */").append("\n");
 		daoSb.append("@Repository(\""+Utils.delUnderline(tablename)+"Dao\")\n");
 		daoSb.append("public class " + Tablename  + "DaoImpl implements ").append(Tablename+"Dao").append("{\n\n");
-		daoSb.append("\t@Resource\n");
-		daoSb.append("\tprivate JdbcTemplate jdbcTemplate;\n\n");
+		daoSb.append("\t@Resource(name = \"jdbcTemplate\")\n");
+		daoSb.append("\tprivate NamedParameterJdbcTemplate jdbcTemplate;\n\n");
 		daoSb.append(fillContent4GetCountByCondition(tablename, rs));
 		daoSb.append(fillContent4FindByCondition(tablename, rs));
 		daoSb.append(fillContent4FindById(tablename, rs));
@@ -186,9 +214,13 @@ public class CreateFileUtil {
 		return content;
 	}
 	
+	
 	static String fillContent4Dao(String tablename, Connection conn) throws Exception {
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		StringBuilder daoSb = new StringBuilder();
+		daoSb.append("\n");
+		daoSb.append("import java.util.List;\n");
+		daoSb.append("import java.util.Map;\n");
 		daoSb.append("\n");
 		daoSb.append("/**").append("\n");
 		daoSb.append(" * @date " + Utils.dateFormat() + "  dao for table ").append(tablename).append("\n");
@@ -196,9 +228,9 @@ public class CreateFileUtil {
 	
 		daoSb.append("public interface " + Tablename  + "Dao").append("{\n\n");
 		daoSb.append("\tpublic int get").append(Tablename+"Count").append("(Map<String, Object> condition)throws Exception;\n");
-		daoSb.append("\tpublic List<Map<String, Object>> find").append(Tablename+"byCondition").append("(Map<String, Object> condition)throws Exception;\n");
-		daoSb.append("\tpublic "+Tablename+" find").append(Tablename+"byId").append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
-		daoSb.append("\tpublic "+Tablename+" find").append(Tablename+"byId").append("(int id)throws Exception;\n");
+		daoSb.append("\tpublic List<Map<String, Object>> find").append(Tablename+"ByCondition").append("(Map<String, Object> condition)throws Exception;\n");
+		daoSb.append("\tpublic "+Tablename+" find").append(Tablename+"ById").append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
+		daoSb.append("\tpublic "+Tablename+" find").append(Tablename+"ById").append("(int id)throws Exception;\n");
 		daoSb.append("\tpublic int insert").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
 		daoSb.append("\tpublic int update").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
 		daoSb.append("\tpublic int delete").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
@@ -300,13 +332,18 @@ public class CreateFileUtil {
 			String fileName = Utils.delUnderline(columnName);
 			if(i<3){
 				whereSb.append(" and "+columnName+"=:"+fileName);
-				valueSb.append("\t\tnamedParameters.put(\""+fileName+"\","+fileName+");\n");
+				valueSb.append("\t\tnamedParameters.put(\""+fileName+"\","+Utils.lowerFirstChar(Tablename)+".get"+Utils.upperFirstChar(fileName)+");\n");
 			}
 		}
 		findSb.append(whereSb).append("\");\n");
-		findSb.append("\t\tMap namedParameters = new HashMap();\n");
+		findSb.append("\t\tMap<String, Object> namedParameters = new HashMap<String, Object>();\n");
 		findSb.append(valueSb);
-		findSb.append("\t\treturn jdbcTemplate.queryForObject(sql.toString(), namedParameters, new BeanPropertyRowMapper<"+Tablename+">("+Tablename+".class));\n");
+		findSb.append("\t\ttry {\n");
+		findSb.append("\t\t\treturn jdbcTemplate.queryForObject(sql.toString(), namedParameters, new BeanPropertyRowMapper<"+Tablename+">("+Tablename+".class));\n");
+		findSb.append("\t\t} catch (EmptyResultDataAccessException e) {\n");
+		findSb.append("\t\t\te.printStackTrace();\n");
+		findSb.append("\t\t}\n");
+		findSb.append("\t\treturn null;\n");
 		findSb.append("\t}\n\n");
 		return findSb.toString();
 	}
@@ -315,14 +352,19 @@ public class CreateFileUtil {
 	static String fillContent4FindByIdInt(String tablename, ResultSet rs)throws Exception{
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		StringBuilder findSb = new StringBuilder();
-		findSb.append("\tpublic "+Tablename+" find").append(Tablename+"byId").append("(int id)throws Exception{\n");
+		findSb.append("\tpublic "+Tablename+" find").append(Tablename+"ById").append("(int id)throws Exception{\n");
 		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
 		findSb.append("\t\tsql.append(\"select * from "+tablename+" where 1=1 ");
 		StringBuilder whereSb = new StringBuilder();
 		findSb.append(whereSb).append("\");\n");
-		findSb.append("\t\tMap namedParameters = new HashMap();\n");
-		findSb.append("\t\tnamedParameters.put(\"###\",\"###\");\n");
-		findSb.append("\t\treturn jdbcTemplate.queryForObject(sql.toString(), namedParameters, new BeanPropertyRowMapper<"+Tablename+">("+Tablename+".class));\n");
+		findSb.append("\t\tMap<String, Object> namedParameters = new HashMap<String, Object>();\n");
+		findSb.append("\t\tnamedParameters.put(\"###\",id);\n");
+		findSb.append("\t\ttry {\n");
+		findSb.append("\t\t\treturn jdbcTemplate.queryForObject(sql.toString(), namedParameters, new BeanPropertyRowMapper<"+Tablename+">("+Tablename+".class));\n");
+		findSb.append("\t\t} catch (EmptyResultDataAccessException e) {\n");
+		findSb.append("\t\t\te.printStackTrace();\n");
+		findSb.append("\t\t}\n");
+		findSb.append("\t\treturn null;\n");
 		findSb.append("\t}\n\n");
 		return findSb.toString();
 	}
@@ -370,6 +412,54 @@ public class CreateFileUtil {
 		findSb.append(whereSb);
 		findSb.append("\t\trowCount = jdbcTemplate.getJdbcOperations().queryForObject(sql.toString(), Integer.class);\n");
 		findSb.append("\t\treturn rowCount;\n");
+		findSb.append("\t}\n\n");
+		return findSb.toString();
+	}
+	
+	static String fillContent4ServiceImpl(String tablename, Connection conn) throws Exception {
+		String sql = "select * from " + tablename + " limit 1";
+		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
+		ResultSet rs = conn.prepareStatement(sql).executeQuery();
+		StringBuilder daoSb = new StringBuilder();
+		daoSb.append("\n");
+		daoSb.append("import java.util.List;\n");
+		daoSb.append("import java.util.Map;\n");
+		daoSb.append("import javax.annotation.Resource;\n");
+		daoSb.append("import org.springframework.stereotype.Service;\n");
+		daoSb.append("\n");
+		daoSb.append("/**").append("\n");
+		daoSb.append(" * @date " + Utils.dateFormat() + "  dao for table ").append(tablename).append("\n");
+		daoSb.append(" */").append("\n");
+		daoSb.append("@Service(\""+Utils.delUnderline(tablename)+"Service\")\n");
+		daoSb.append("public class " + Tablename  + "ServiceImpl implements ").append(Tablename+"Service").append("{\n\n");
+		daoSb.append("\t@Resource(name = \""+Utils.delUnderline(tablename)+"Dao\")\n");
+		daoSb.append("\tprivate "+Tablename+"Dao "+Utils.delUnderline(tablename)+"Dao;\n\n");
+		daoSb.append(fillContent4FindService(tablename, rs));
+		daoSb.append("}");
+		String content = daoSb.toString();
+		return content;
+	}
+	
+	static String fillContent4FindService(String tablename, ResultSet rs)throws Exception{
+		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
+		StringBuilder findSb = new StringBuilder();
+		findSb.append("\tpublic void find").append(Tablename).append("(PageHolder<Map<String, Object>> pageHolder, Map<String, Object> condition)throws Exception{\n");
+		findSb.append("\t\tcondition.put(\"limit\", 1);\n");
+		findSb.append("\t\tcondition.put(\"rowOffset\", pageHolder.getRowOffset());\n");
+		findSb.append("\t\tcondition.put(\"pageSize\", pageHolder.getPageSize());\n");
+		findSb.append("\t\tlong rowCount = "+Utils.delUnderline(tablename)+"Dao.get"+Tablename+"Count(condition);\n");
+		findSb.append("\t\tpageHolder.setRowCount(rowCount);\n");
+		findSb.append("\t\tif(rowCount == 0){\n");
+		findSb.append("\t\t\treturn ;\n");
+		findSb.append("\t\t}\n");
+		findSb.append("\t\tList<Map<String, Object>> list = "+Utils.delUnderline(tablename)+"Dao.find"+Tablename+"ByCondition(condition);\n");
+		findSb.append("\t\tif(list != null && list.size() > 0){\n");
+		findSb.append("\t\t\tfor(int i=0; i<list.size(); i++){\n");
+		findSb.append("\t\t\t\tMap<String, Object> map = list.get(i);\n");
+		findSb.append("\t\t\t\tlist.set(i, map);\n");
+		findSb.append("\t\t\t}\n");
+		findSb.append("\t\t}\n");
+		findSb.append("\t\tpageHolder.setList(list);\n");
 		findSb.append("\t}\n\n");
 		return findSb.toString();
 	}
@@ -432,12 +522,14 @@ public class CreateFileUtil {
 		}
 	}
 	
+	
+	
 	public static void main(String[] args) throws Exception {
 		Class.forName("com.mysql.jdbc.Driver");
-		Connection conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
-		CreateFileUtil.createFile("Student", "", conn, "utf-8");
-//		Connection conn = DriverManager.getConnection("jdbc:mysql://192.168.6.96:3306/ddpa_dev", "ddpa1008T", "ddpa@*Dc67");
-//		CreateFileUtil.createFile("fund_trade", "", conn, "utf-8");
+//		Connection conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
+//		CreateFileUtil.createFile("Student", "", conn, "utf-8");
+		Connection conn = DriverManager.getConnection("jdbc:mysql://192.168.6.96:3306/ddpa_dev", "ddpa1008T", "ddpa@*Dc67");
+		CreateFileUtil.createFile("fund_actual_account_log", "", conn, "utf-8");
 	}
 
 }
