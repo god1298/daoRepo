@@ -332,7 +332,7 @@ public class CreateFileUtil {
 			String fileName = Utils.delUnderline(columnName);
 			if(i<3){
 				whereSb.append(" and "+columnName+"=:"+fileName);
-				valueSb.append("\t\tnamedParameters.put(\""+fileName+"\","+Utils.lowerFirstChar(Tablename)+".get"+Utils.upperFirstChar(fileName)+");\n");
+				valueSb.append("\t\tnamedParameters.put(\""+fileName+"\","+Utils.lowerFirstChar(Tablename)+".get"+Utils.upperFirstChar(fileName)+"());\n");
 			}
 		}
 		findSb.append(whereSb).append("\");\n");
