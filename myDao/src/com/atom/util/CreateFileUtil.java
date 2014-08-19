@@ -375,20 +375,24 @@ public class CreateFileUtil {
 		findSb.append("\tpublic List<Map<String, Object>> find").append(Tablename+"ByCondition").append("(Map<String, Object> condition)throws Exception{\n");
 		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
 		findSb.append("\t\tsql.append(\"select * from "+tablename+" where 1=1 \");\n");
+		findSb.append("\t\tMap<String, Object> namedParameters = new HashMap<String, Object>();\n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder whereSb = new StringBuilder();
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
 			String columnName = meta.getColumnName(i);
 			String fileName = Utils.delUnderline(columnName);
 			whereSb.append("\t\tif(condition.get(\""+fileName+"\") != null){\n");
-			whereSb.append("\t\t\tsql.append(\" and "+columnName+"=\").append(condition.get(\""+fileName+"\").toString());\n");
+			whereSb.append("\t\t\tsql.append(\" and "+columnName+"=:"+fileName+"\");\n");
+			whereSb.append("\t\t\tnamedParameters.put(\""+fileName+"\", condition.get(\""+fileName+"\"));\n");
 			whereSb.append("\t\t}\n");
 		}
 		whereSb.append("\t\tif(condition.get(\"limit\") != null){\n");
-		whereSb.append("\t\t\tsql.append(\" limit \").append(condition.get(\"rowOffset\")).append(\",\").append(condition.get(\"pageSize\"));\n");
+		whereSb.append("\t\t\tsql.append(\" limit :rowOffset,:pageSize\");\n");
+		whereSb.append("\t\t\tnamedParameters.put(\"rowOffset\", condition.get(\"rowOffset\"))\n");
+		whereSb.append("\t\t\tnamedParameters.put(\"pageSize\", condition.get(\"pageSize\"))\n");
 		whereSb.append("\t\t}\n");
 		findSb.append(whereSb);
-		findSb.append("\t\treturn jdbcTemplate.getJdbcOperations().queryForList(sql.toString());\n");
+		findSb.append("\t\treturn jdbcTemplate.queryForList(sql.toString(), namedParameters);\n");
 		findSb.append("\t}\n\n");
 		return findSb.toString();
 	}
@@ -400,17 +404,19 @@ public class CreateFileUtil {
 		findSb.append("\t\tint rowCount = 0;\n"); 
 		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
 		findSb.append("\t\tsql.append(\"select count(1) from "+tablename+" where 1=1 \");\n");
+		findSb.append("\t\tMap<String, Object> namedParameters = new HashMap<String, Object>();\n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder whereSb = new StringBuilder();
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
 			String columnName = meta.getColumnName(i);
 			String fileName = Utils.delUnderline(columnName);
 			whereSb.append("\t\tif(condition.get(\""+fileName+"\") != null){\n");
-			whereSb.append("\t\t\tsql.append(\" and "+columnName+"=\").append(condition.get(\""+fileName+"\").toString());\n");
+			whereSb.append("\t\t\tsql.append(\" and "+columnName+"=:"+fileName+"\");\n");
+			whereSb.append("\t\t\tnamedParameters.put(\""+fileName+"\", condition.get(\""+fileName+"\"));\n");
 			whereSb.append("\t\t}\n");
 		}
 		findSb.append(whereSb);
-		findSb.append("\t\trowCount = jdbcTemplate.getJdbcOperations().queryForObject(sql.toString(), Integer.class);\n");
+		findSb.append("\t\trowCount = jdbcTemplate.getJdbcOperations().queryForObject(sql.toString(), namedParameters, Integer.class);\n");
 		findSb.append("\t\treturn rowCount;\n");
 		findSb.append("\t}\n\n");
 		return findSb.toString();
@@ -528,8 +534,8 @@ public class CreateFileUtil {
 		Class.forName("com.mysql.jdbc.Driver");
 //		Connection conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
 //		CreateFileUtil.createFile("Student", "", conn, "utf-8");
-		Connection conn = DriverManager.getConnection("jdbc:mysql://192.168.6.96:3306/ddpa_dev", "ddpa1008T", "ddpa@*Dc67");
-		CreateFileUtil.createFile("fund_actual_account_log", "", conn, "utf-8");
+		Connection conn = DriverManager.getConnection("jdbc:mysql://203.195.180.236:3306/lianao", "timescloud", "timescloud");
+		CreateFileUtil.createFile("school_class", "", conn, "utf-8");
 	}
 
 }
