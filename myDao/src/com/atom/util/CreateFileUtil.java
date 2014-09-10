@@ -14,6 +14,8 @@ import java.sql.Types;
 
 public class CreateFileUtil {
 	
+	public static String DB_PREFIX;
+	
 	/**
 	 * 
 	 * @param tablename
@@ -194,6 +196,13 @@ public class CreateFileUtil {
 		daoSb.append("import javax.annotation.Resource;\n");
 		daoSb.append("import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;\n");
 		daoSb.append("import org.springframework.stereotype.Repository;\n");
+		daoSb.append("import org.springframework.jdbc.core.RowMapper;\n");
+		daoSb.append("import org.springframework.jdbc.core.simple.ParameterizedBeanPropertyRowMapper;\n");
+		daoSb.append("import java.sql.Connection;\n");
+		daoSb.append("import java.sql.PreparedStatement;\n");
+		daoSb.append("import org.springframework.jdbc.support.GeneratedKeyHolder;\n");
+		daoSb.append("import org.springframework.jdbc.support.KeyHolder;\n");
+		daoSb.append("import org.springframework.jdbc.core.PreparedStatementCreator;\n");
 		daoSb.append("\n");
 		daoSb.append("/**").append("\n");
 		daoSb.append(" * @date " + Utils.dateFormat() + "  dao for table ").append(tablename).append("\n");
@@ -202,11 +211,15 @@ public class CreateFileUtil {
 		daoSb.append("public class " + Tablename  + "DaoImpl implements ").append(Tablename+"Dao").append("{\n\n");
 		daoSb.append("\t@Resource(name = \"jdbcTemplate\")\n");
 		daoSb.append("\tprivate NamedParameterJdbcTemplate jdbcTemplate;\n\n");
+		daoSb.append("\tprivate RowMapper<"+Tablename+"> "+Utils.delUnderline(tablename)+"Mapper = ParameterizedBeanPropertyRowMapper.newInstance("+Tablename+".class);\n\n");
+		
 		daoSb.append(fillContent4GetCountByCondition(tablename, rs));
 		daoSb.append(fillContent4FindByCondition(tablename, rs));
+		daoSb.append(fillContent4FindObjByCondition(tablename, rs));
 		daoSb.append(fillContent4FindById(tablename, rs));
 		daoSb.append(fillContent4FindByIdInt(tablename, rs));
 		daoSb.append(fillContent4Insert(tablename, rs));
+		daoSb.append(fillContent4InsertAndGetKey(tablename, rs));
 		daoSb.append(fillContent4Update(tablename, rs));
 		daoSb.append(fillContent4Delete(tablename, rs));
 		daoSb.append("}");
@@ -232,6 +245,7 @@ public class CreateFileUtil {
 		daoSb.append("\tpublic "+Tablename+" find").append(Tablename+"ById").append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
 		daoSb.append("\tpublic "+Tablename+" find").append(Tablename+"ById").append("(int id)throws Exception;\n");
 		daoSb.append("\tpublic int insert").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
+		daoSb.append("\tpublic int insert").append(Tablename+"AndGetKey").append("(final "+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
 		daoSb.append("\tpublic int update").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
 		daoSb.append("\tpublic int delete").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
 		daoSb.append("}");
@@ -245,7 +259,7 @@ public class CreateFileUtil {
 		insertSb.append("\tpublic int insert").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception{\n");
 		insertSb.append("\t\tint rowCount = 0;\n");
 		insertSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
-		insertSb.append("\t\tsql.append(\"insert into "+tablename+"\");\n");
+		insertSb.append("\t\tsql.append(\"insert into "+DB_PREFIX+tablename+"\");\n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder sbKey = new StringBuilder();
 		StringBuilder sbValue = new StringBuilder();
@@ -266,13 +280,51 @@ public class CreateFileUtil {
 		return insertSb.toString();
 	}
 	
+	static String fillContent4InsertAndGetKey(String tablename, ResultSet rs)throws Exception{
+		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
+		StringBuilder insertSb = new StringBuilder();
+		insertSb.append("\tpublic int insert").append(Tablename+"AndGetKey").append("(final "+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception{\n");
+		insertSb.append("\t\tfinal StringBuilder sql = new StringBuilder(100);\n");
+		insertSb.append("\t\tsql.append(\"insert into "+DB_PREFIX+tablename+"\");\n");
+		ResultSetMetaData meta = rs.getMetaData();
+		StringBuilder sbKey = new StringBuilder();
+		StringBuilder sbValue = new StringBuilder();
+		StringBuilder sbKeyValue = new StringBuilder();
+		for (int i = 1; i <= meta.getColumnCount(); i++) {
+			String columnName = meta.getColumnName(i);
+			String fileName = Utils.delUnderline(columnName);
+			sbKey.append(columnName+",");
+			sbValue.append("?,");
+			sbKeyValue.append("\t\t\t\tps.setObject("+i+", "+Utils.lowerFirstChar(Tablename)+".get"+Utils.upperFirstChar(fileName)+"());\n");
+		}
+		sbKey.deleteCharAt(sbKey.length()-1);
+		sbValue.deleteCharAt(sbValue.length()-1);
+		insertSb.append("\t\tsql.append(\"("+sbKey.toString()).append(")\");\n");
+		insertSb.append("\t\tsql.append(\" values\");\n");
+		insertSb.append("\t\tsql.append(\"(").append(sbValue.toString()).append(")\");\n");
+		
+		insertSb.append("\t\tKeyHolder keyHolder = new GeneratedKeyHolder();\n");
+		insertSb.append("\t\tjdbcTemplate.getJdbcOperations().update(new PreparedStatementCreator() {\n");
+		insertSb.append("\n");
+		insertSb.append("\t\t\t@Override\n");
+		insertSb.append("\t\t\tpublic PreparedStatement createPreparedStatement(Connection conn)throws SQLException {\n");
+		insertSb.append("\t\t\t\tPreparedStatement ps = conn.prepareStatement(sql.toString());\n");
+		insertSb.append(sbKeyValue);
+		insertSb.append("\t\t\t\treturn ps;\n");
+		insertSb.append("\t\t\t}\n");
+		insertSb.append("\t\t}, keyHolder);\n");
+		insertSb.append("\t\treturn keyHolder.getKey().intValue();\n");
+		insertSb.append("\t}\n\n");
+		return insertSb.toString();
+	}
+	
 	static String fillContent4Update(String tablename, ResultSet rs)throws Exception{
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		StringBuilder updateSb = new StringBuilder();
 		updateSb.append("\tpublic int update").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception{\n");
 		updateSb.append("\t\tint rowCount = 0;\n");
 		updateSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
-		updateSb.append("\t\tsql.append(\"update "+tablename+" set \");\n");
+		updateSb.append("\t\tsql.append(\"update "+DB_PREFIX+tablename+" set \");\n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder sb = new StringBuilder();
 		StringBuilder whereSb = new StringBuilder();
@@ -300,7 +352,7 @@ public class CreateFileUtil {
 		deleteSb.append("\tpublic int delete").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception{\n");
 		deleteSb.append("\t\tint rowCount = 0;\n");
 		deleteSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
-		deleteSb.append("\t\tsql.append(\"delete from "+tablename+" where 1=1 \");\n");
+		deleteSb.append("\t\tsql.append(\"delete from "+DB_PREFIX+tablename+" where 1=1 \");\n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder sb = new StringBuilder();
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
@@ -323,7 +375,7 @@ public class CreateFileUtil {
 		StringBuilder findSb = new StringBuilder();
 		findSb.append("\tpublic "+Tablename+" find").append(Tablename+"ById").append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception{\n");
 		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
-		findSb.append("\t\tsql.append(\"select * from "+tablename+" where 1=1 ");
+		findSb.append("\t\tsql.append(\"select * from "+DB_PREFIX+tablename+" where 1=1 ");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder whereSb = new StringBuilder();
 		StringBuilder valueSb = new StringBuilder();
@@ -354,7 +406,7 @@ public class CreateFileUtil {
 		StringBuilder findSb = new StringBuilder();
 		findSb.append("\tpublic "+Tablename+" find").append(Tablename+"ById").append("(int id)throws Exception{\n");
 		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
-		findSb.append("\t\tsql.append(\"select * from "+tablename+" where 1=1 ");
+		findSb.append("\t\tsql.append(\"select * from "+DB_PREFIX+tablename+" where 1=1 ");
 		StringBuilder whereSb = new StringBuilder();
 		findSb.append(whereSb).append("\");\n");
 		findSb.append("\t\tMap<String, Object> namedParameters = new HashMap<String, Object>();\n");
@@ -374,7 +426,7 @@ public class CreateFileUtil {
 		StringBuilder findSb = new StringBuilder();
 		findSb.append("\tpublic List<Map<String, Object>> find").append(Tablename+"ByCondition").append("(Map<String, Object> condition)throws Exception{\n");
 		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
-		findSb.append("\t\tsql.append(\"select * from "+tablename+" where 1=1 \");\n");
+		findSb.append("\t\tsql.append(\"select * from "+DB_PREFIX+tablename+" where 1=1 \");\n");
 		findSb.append("\t\tMap<String, Object> namedParameters = new HashMap<String, Object>();\n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder whereSb = new StringBuilder();
@@ -388,11 +440,39 @@ public class CreateFileUtil {
 		}
 		whereSb.append("\t\tif(condition.get(\"limit\") != null){\n");
 		whereSb.append("\t\t\tsql.append(\" limit :rowOffset,:pageSize\");\n");
-		whereSb.append("\t\t\tnamedParameters.put(\"rowOffset\", condition.get(\"rowOffset\"))\n");
-		whereSb.append("\t\t\tnamedParameters.put(\"pageSize\", condition.get(\"pageSize\"))\n");
+		whereSb.append("\t\t\tnamedParameters.put(\"rowOffset\", condition.get(\"rowOffset\"));\n");
+		whereSb.append("\t\t\tnamedParameters.put(\"pageSize\", condition.get(\"pageSize\"));\n");
 		whereSb.append("\t\t}\n");
 		findSb.append(whereSb);
 		findSb.append("\t\treturn jdbcTemplate.queryForList(sql.toString(), namedParameters);\n");
+		findSb.append("\t}\n\n");
+		return findSb.toString();
+	}
+	
+	static String fillContent4FindObjByCondition(String tablename, ResultSet rs)throws Exception{
+		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
+		StringBuilder findSb = new StringBuilder();
+		findSb.append("\tpublic List<"+Tablename+"> find").append(Tablename+"ObjByCondition").append("(Map<String, Object> condition)throws Exception{\n");
+		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
+		findSb.append("\t\tsql.append(\"select * from "+DB_PREFIX+tablename+" where 1=1 \");\n");
+		findSb.append("\t\tMap<String, Object> namedParameters = new HashMap<String, Object>();\n");
+		ResultSetMetaData meta = rs.getMetaData();
+		StringBuilder whereSb = new StringBuilder();
+		for (int i = 1; i <= meta.getColumnCount(); i++) {
+			String columnName = meta.getColumnName(i);
+			String fileName = Utils.delUnderline(columnName);
+			whereSb.append("\t\tif(condition.get(\""+fileName+"\") != null){\n");
+			whereSb.append("\t\t\tsql.append(\" and "+columnName+"=:"+fileName+"\");\n");
+			whereSb.append("\t\t\tnamedParameters.put(\""+fileName+"\", condition.get(\""+fileName+"\"));\n");
+			whereSb.append("\t\t}\n");
+		}
+		whereSb.append("\t\tif(condition.get(\"limit\") != null){\n");
+		whereSb.append("\t\t\tsql.append(\" limit :rowOffset,:pageSize\");\n");
+		whereSb.append("\t\t\tnamedParameters.put(\"rowOffset\", condition.get(\"rowOffset\"));\n");
+		whereSb.append("\t\t\tnamedParameters.put(\"pageSize\", condition.get(\"pageSize\"));\n");
+		whereSb.append("\t\t}\n");
+		findSb.append(whereSb);
+		findSb.append("\t\treturn jdbcTemplate.query(sql.toString(), namedParameters, "+Utils.delUnderline(tablename)+"Mapper);\n");
 		findSb.append("\t}\n\n");
 		return findSb.toString();
 	}
@@ -403,7 +483,7 @@ public class CreateFileUtil {
 		findSb.append("\tpublic int get").append(Tablename+"Count").append("(Map<String, Object> condition)throws Exception{\n");
 		findSb.append("\t\tint rowCount = 0;\n"); 
 		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
-		findSb.append("\t\tsql.append(\"select count(1) from "+tablename+" where 1=1 \");\n");
+		findSb.append("\t\tsql.append(\"select count(1) from "+DB_PREFIX+tablename+" where 1=1 \");\n");
 		findSb.append("\t\tMap<String, Object> namedParameters = new HashMap<String, Object>();\n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder whereSb = new StringBuilder();
@@ -416,7 +496,7 @@ public class CreateFileUtil {
 			whereSb.append("\t\t}\n");
 		}
 		findSb.append(whereSb);
-		findSb.append("\t\trowCount = jdbcTemplate.getJdbcOperations().queryForObject(sql.toString(), namedParameters, Integer.class);\n");
+		findSb.append("\t\trowCount = jdbcTemplate.queryForObject(sql.toString(), namedParameters, Integer.class);\n");
 		findSb.append("\t\treturn rowCount;\n");
 		findSb.append("\t}\n\n");
 		return findSb.toString();
@@ -434,7 +514,7 @@ public class CreateFileUtil {
 		daoSb.append("import org.springframework.stereotype.Service;\n");
 		daoSb.append("\n");
 		daoSb.append("/**").append("\n");
-		daoSb.append(" * @date " + Utils.dateFormat() + "  dao for table ").append(tablename).append("\n");
+		daoSb.append(" * @date " + Utils.dateFormat() + "  service for table ").append(tablename).append("\n");
 		daoSb.append(" */").append("\n");
 		daoSb.append("@Service(\""+Utils.delUnderline(tablename)+"Service\")\n");
 		daoSb.append("public class " + Tablename  + "ServiceImpl implements ").append(Tablename+"Service").append("{\n\n");
@@ -535,7 +615,8 @@ public class CreateFileUtil {
 //		Connection conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
 //		CreateFileUtil.createFile("Student", "", conn, "utf-8");
 		Connection conn = DriverManager.getConnection("jdbc:mysql://203.195.180.236:3306/lianao", "timescloud", "timescloud");
-		CreateFileUtil.createFile("school_class", "", conn, "utf-8");
+		DB_PREFIX = "lianao.";
+		CreateFileUtil.createFile("activity_comment", "", conn, "utf-8");
 	}
 
 }
