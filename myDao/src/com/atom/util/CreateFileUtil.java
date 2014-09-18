@@ -614,9 +614,9 @@ public class CreateFileUtil {
 		Class.forName("com.mysql.jdbc.Driver");
 //		Connection conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
 //		CreateFileUtil.createFile("Student", "", conn, "utf-8");
-		Connection conn = DriverManager.getConnection("jdbc:mysql://203.195.180.236:3306/lianao", "timescloud", "timescloud");
-		DB_PREFIX = "lianao.";
-		CreateFileUtil.createFile("activity_comment", "", conn, "utf-8");
+		Connection conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/hlatom", "atom", "123456");
+		DB_PREFIX = "hlatom.";
+		CreateFileUtil.createFile("sys_menu", "", conn, "utf-8");
 	}
 
 }
