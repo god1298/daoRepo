@@ -486,15 +486,15 @@ public class CreateMyBatisFileUtil {
 		case Types.NUMERIC:
 			return "BigDecimal";
 		case Types.SMALLINT:
-			return "int";
+			return "Integer";
 		case Types.TINYINT:
-			return "int";
+			return "Integer";
 		case Types.INTEGER:
-			return "int";
+			return "Integer";
 		case Types.DOUBLE:
-			return "double";
+			return "Double";
 		case Types.FLOAT:
-			return "float";
+			return "Float";
 		case Types.REAL:
 			return "BigDecimal";
 		case Types.TIMESTAMP:
@@ -518,7 +518,7 @@ public class CreateMyBatisFileUtil {
 		case Types.LONGNVARCHAR:
 			return "String";
 		case Types.BIT:
-			return "boolean";
+			return "Boolean";
 		default:
 			return "String";
 		}
@@ -545,6 +545,7 @@ public class CreateMyBatisFileUtil {
 		Connection conn = DriverManager.getConnection("jdbc:mysql://192.168.1.25:3306/niiwoo", "niiwoowrite", "tuandai123");
 		DB_PREFIX = "niiwoo.";
 		CreateMyBatisFileUtil.createFile("sys_menu", "", conn, "utf-8");
+		//String filePath = "D:\workspace\niiwoo-app\niiwoo-dao\src\main\resources\mybatis-config.xml";
 	}
 
 }
