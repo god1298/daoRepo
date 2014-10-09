@@ -1,5 +1,14 @@
 package com.atom.util;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -47,5 +56,35 @@ public class Utils {
 			}
 		}
 		return false;
+	}
+	
+	public static String readFile(String path)throws Exception{
+		StringBuffer content = new StringBuffer();
+		FileReader fr = new FileReader(path);
+		BufferedReader br = new BufferedReader(fr);
+		String tmpContent = "";
+		while((tmpContent = br.readLine()) != null){
+			content.append(tmpContent+"\n");
+		}
+		fr.close();
+		br.close();
+		return content.toString();
+	}
+	
+	public static void writeFile(String path, String content)throws Exception{
+		FileWriter fw = new FileWriter(path);
+		BufferedWriter bw = new BufferedWriter(fw);
+		bw.write(content);
+		bw.flush();
+		fw.flush();
+		fw.close();
+		bw.close();
+	}
+	
+	public static void main(String[] args)throws Exception {
+		String path = "D:\\workspace\\niiwoo-app\\niiwoo-dao\\src\\main\\resources\\mybatis-config.xml";
+		String content = readFile(path);
+		StringBuffer str = new StringBuffer(content);
+		System.out.println(str.insert(str.indexOf("\t</mappers>"), "test1111"));
 	}
 }

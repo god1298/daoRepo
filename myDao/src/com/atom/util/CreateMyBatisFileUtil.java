@@ -192,7 +192,7 @@ public class CreateMyBatisFileUtil {
 		StringBuilder daoSb = new StringBuilder();
 		daoSb.append("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
 		daoSb.append("<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"http://mybatis.org/dtd/mybatis-3-mapper.dtd\" >\n");
-		daoSb.append("<mapper namespace=\"com.niiwoo.dao.mapper.sys."+Tablename+"\" >\n\n");
+		daoSb.append("<mapper namespace=\"com.niiwoo.dao.mapper."+fileDir==""?"":(fileDir+".")+Tablename+"\" >\n\n");
 		daoSb.append(fillContent4ResultMap(tablename, rs));
 		daoSb.append(fillContent4GetCountByCondition(tablename, rs));
 		daoSb.append(fillContent4FindByCondition(tablename, rs));
@@ -536,7 +536,33 @@ public class CreateMyBatisFileUtil {
 		}
 	}
 	
+	public static void configurationXml(String tablename, String configPath, String daoPath)throws Exception{
+		String className = Utils.lowerFirstChar(Utils.delUnderline(tablename));
+		String TableName = Utils.upperFirstChar(Utils.delUnderline(tablename));
+		String templateDaoXml = "\t<bean id=\""+className+"Mapper\" class=\"org.mybatis.spring.mapper.MapperFactoryBean\">\n";
+		templateDaoXml += "\t\t<property name=\"mapperInterface\" value=\"com.niiwoo.dao.mapper."+fileDir+"."+className+"Mapper\"></property>\n";
+		templateDaoXml += "\t\t<property name=\"sqlSessionFactory\" ref=\"sqlSessionFactory\"></property>\n";
+		templateDaoXml += "\t</bean>\n";
+		String content = Utils.readFile(daoPath);
+		StringBuffer str = new StringBuffer(content);
+		str = str.insert(str.indexOf("</beans>"), templateDaoXml);
+		System.out.println(str);
+		Utils.writeFile(daoPath, String.valueOf(str));
+		
+		String templateAliax = "\t\t<typeAlias type=\"com.niiwoo.dao.model."+fileDir+"."+TableName+"\" alias=\""+className+"\" />\n";
+		String templateMapper = "\t\t<mapper resource=\"com/niiwoo/dao/mapping/"+fileDir+"/"+TableName+"Mapper.xml\" />\n";
+		
+		content = Utils.readFile(configPath);
+		str = new StringBuffer(content);
+		str = str.insert(str.indexOf("\t</typeAliases>"), templateAliax);
+		str = str.insert(str.indexOf("\t</mappers>"), templateMapper);
+		System.out.println(str);
+		Utils.writeFile(configPath, String.valueOf(str));
+	}
 	
+	static String configPath = "";
+	static String daoPath = "";
+	static String fileDir = "";
 	
 	public static void main(String[] args) throws Exception {
 		Class.forName("com.mysql.jdbc.Driver");
@@ -544,8 +570,14 @@ public class CreateMyBatisFileUtil {
 //		CreateFileUtil.createFile("Student", "", conn, "utf-8");
 		Connection conn = DriverManager.getConnection("jdbc:mysql://192.168.1.25:3306/niiwoo", "niiwoowrite", "tuandai123");
 		DB_PREFIX = "niiwoo.";
-		CreateMyBatisFileUtil.createFile("sys_menu", "", conn, "utf-8");
-		//String filePath = "D:\workspace\niiwoo-app\niiwoo-dao\src\main\resources\mybatis-config.xml";
+		
+		configPath = "D:\\workspace\\niiwoo-app\\niiwoo-dao\\src\\main\\resources\\mybatis-config.xml";
+		daoPath = "D:\\workspace\\niiwoo-app\\niiwoo-dao\\src\\main\\resources\\spring-dao.xml";
+		fileDir = "sys";
+		
+		CreateMyBatisFileUtil.createFile("sys_role", "", conn, "utf-8");
+		
+		CreateMyBatisFileUtil.configurationXml("sys_role", configPath, daoPath);
 	}
 
 }
