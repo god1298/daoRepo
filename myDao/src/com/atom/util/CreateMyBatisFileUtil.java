@@ -106,7 +106,7 @@ public class CreateMyBatisFileUtil {
 	}
 	
 	static String fillContent4Entity(String tablename, Connection conn) throws SQLException {
-		String sql = "select * from " + tablename + " limit 1";
+		String sql = "select * from " + realTableName + " limit 1";
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		ResultSet rs = conn.prepareStatement(sql).executeQuery();
 		StringBuilder entitySb = new StringBuilder();
@@ -186,13 +186,13 @@ public class CreateMyBatisFileUtil {
 	
 	
 	static String fillContent4DaoImpl(String tablename, Connection conn) throws Exception {
-		String sql = "select * from " + tablename + " limit 1";
+		String sql = "select * from " + realTableName + " limit 1";
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		ResultSet rs = conn.prepareStatement(sql).executeQuery();
 		StringBuilder daoSb = new StringBuilder();
 		daoSb.append("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
 		daoSb.append("<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"http://mybatis.org/dtd/mybatis-3-mapper.dtd\" >\n");
-		daoSb.append("<mapper namespace=\"com.niiwoo.dao.mapper."+fileDir==""?"":(fileDir+".")+Tablename+"\" >\n\n");
+		daoSb.append("<mapper namespace=\"com.niiwoo.dao.mapper."+(fileDir+".")+Tablename+"Mapper\" >\n\n");
 		daoSb.append(fillContent4ResultMap(tablename, rs));
 		daoSb.append(fillContent4GetCountByCondition(tablename, rs));
 		daoSb.append(fillContent4FindByCondition(tablename, rs));
@@ -251,7 +251,7 @@ public class CreateMyBatisFileUtil {
 			sbValue.append("#{"+fileName+"},");
 		}
 		insertSb.append("\t<insert id=\"insert").append(Tablename+"\" parameterType=\""+className+"\" useGeneratedKeys=\"true\" keyProperty=\""+primaryKeyStr+"\">\n");
-		insertSb.append("\t\tinsert into "+DB_PREFIX+tablename+"\n");
+		insertSb.append("\t\tinsert into "+DB_PREFIX+realTableName+"\n");
 		sbKey.deleteCharAt(sbKey.length()-1);
 		sbValue.deleteCharAt(sbValue.length()-1);
 		insertSb.append("\t\t("+sbKey.toString()).append(")\n");
@@ -277,7 +277,7 @@ public class CreateMyBatisFileUtil {
 			}
 		}
 		updateSb.append("\t<update id=\"update").append(Tablename+"\" parameterType=\""+className+"\" >\n");
-		updateSb.append("\t\tupdate "+DB_PREFIX+tablename+" set\n");
+		updateSb.append("\t\tupdate "+DB_PREFIX+realTableName+" set\n");
 		sb.deleteCharAt(sb.length()-1);
 		updateSb.append("\t\t"+sb+"\n");
 		updateSb.append("\t\twhere 1=1 \n");
@@ -301,7 +301,7 @@ public class CreateMyBatisFileUtil {
 			}
 		}
 		deleteSb.append("\t<delete id=\"delete").append(Tablename+"\" parameterType=\""+className+"\" >\n");
-		deleteSb.append("\t\tdelete from "+DB_PREFIX+tablename+" where 1=1\n");
+		deleteSb.append("\t\tdelete from "+DB_PREFIX+realTableName+" where 1=1\n");
 		deleteSb.append("\t\t"+sb+"\n");
 		deleteSb.append("\t</delete>\n\n");
 		return deleteSb.toString();
@@ -312,7 +312,7 @@ public class CreateMyBatisFileUtil {
 		String className = Utils.lowerFirstChar(Utils.delUnderline(tablename));
 		StringBuilder findSb = new StringBuilder();
 		findSb.append("\t<select id=\"find").append(Tablename+"ByObj\" parameterType=\""+className+"\" resultMap=\""+className+"Result\" >\n");
-		findSb.append("\t\tselect * from "+DB_PREFIX+tablename+" where 1=1 \n");
+		findSb.append("\t\tselect * from "+DB_PREFIX+realTableName+" where 1=1 \n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder whereSb = new StringBuilder();
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
@@ -335,16 +335,16 @@ public class CreateMyBatisFileUtil {
 		String className = Utils.lowerFirstChar(Utils.delUnderline(tablename));
 		StringBuilder findSb = new StringBuilder();
 		findSb.append("\t<select id=\"find").append(Tablename+"ById\" parameterType=\"int\" resultMap=\""+className+"Result\" >\n");
-		findSb.append("\t\tselect * from "+DB_PREFIX+tablename+" where 1=1 \n");
+		findSb.append("\t\tselect * from "+DB_PREFIX+realTableName+" where 1=1 \n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder whereSb = new StringBuilder();
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
 			String columnName = meta.getColumnName(i);
 			String fileName = Utils.delUnderline(columnName);
 			if(i<2){
-				whereSb.append("\t\t<if test=\""+fileName+" != null\">\n");
+				// whereSb.append("\t\t<if test=\""+fileName+" != null\">\n");
 				whereSb.append("\t\t\tand "+columnName+"=#{"+fileName+"}\n");
-				whereSb.append("\t\t</if>\n");
+				// whereSb.append("\t\t</if>\n");
 			}
 		}
 		findSb.append(whereSb);
@@ -356,7 +356,7 @@ public class CreateMyBatisFileUtil {
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		StringBuilder findSb = new StringBuilder();
 		findSb.append("\t<select id=\"find").append(Tablename+"ByCondition\" parameterType=\"java.util.Map\" resultType=\"java.util.Map\" >\n");
-		findSb.append("\t\tselect * from "+DB_PREFIX+tablename+" where 1=1 \n");
+		findSb.append("\t\tselect * from "+DB_PREFIX+realTableName+" where 1=1 \n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder whereSb = new StringBuilder();
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
@@ -379,7 +379,7 @@ public class CreateMyBatisFileUtil {
 		String className = Utils.lowerFirstChar(Utils.delUnderline(tablename));
 		StringBuilder findSb = new StringBuilder();
 		findSb.append("\t<select id=\"find").append(Tablename+"ObjByCondition\" parameterType=\"java.util.Map\" resultMap=\""+className+"Result\" >\n");
-		findSb.append("\t\tselect * from "+DB_PREFIX+tablename+" where 1=1 \n");
+		findSb.append("\t\tselect * from "+DB_PREFIX+realTableName+" where 1=1 \n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder whereSb = new StringBuilder();
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
@@ -415,7 +415,7 @@ public class CreateMyBatisFileUtil {
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		StringBuilder findSb = new StringBuilder();
 		findSb.append("\t<select id=\"get").append(Tablename+"Count\" parameterType=\"java.util.Map\" resultType=\"int\" >\n");
-		findSb.append("\t\tselect count(1) from "+DB_PREFIX+tablename+" where 1=1 \n");
+		findSb.append("\t\tselect count(1) from "+DB_PREFIX+realTableName+" where 1=1 \n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder whereSb = new StringBuilder();
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
@@ -431,7 +431,7 @@ public class CreateMyBatisFileUtil {
 	}
 	
 	static String fillContent4ServiceImpl(String tablename, Connection conn) throws Exception {
-		String sql = "select * from " + tablename + " limit 1";
+		String sql = "select * from " + realTableName + " limit 1";
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		ResultSet rs = conn.prepareStatement(sql).executeQuery();
 		StringBuilder daoSb = new StringBuilder();
@@ -446,8 +446,8 @@ public class CreateMyBatisFileUtil {
 		daoSb.append(" */").append("\n");
 		daoSb.append("@Service(\""+Utils.delUnderline(tablename)+"Service\")\n");
 		daoSb.append("public class " + Tablename  + "ServiceImpl implements ").append(Tablename+"Service").append("{\n\n");
-		daoSb.append("\t@Resource(name = \""+Utils.delUnderline(tablename)+"Dao\")\n");
-		daoSb.append("\tprivate "+Tablename+"Dao "+Utils.delUnderline(tablename)+"Dao;\n\n");
+		daoSb.append("\t@Resource(name = \""+Utils.delUnderline(tablename)+"Mapper\")\n");
+		daoSb.append("\tprivate "+Tablename+"Mapper "+Utils.delUnderline(tablename)+"Mapper;\n\n");
 		daoSb.append(fillContent4FindService(tablename, rs));
 		daoSb.append("}");
 		String content = daoSb.toString();
@@ -461,12 +461,12 @@ public class CreateMyBatisFileUtil {
 		findSb.append("\t\tcondition.put(\"limit\", 1);\n");
 		findSb.append("\t\tcondition.put(\"rowOffset\", pageHolder.getRowOffset());\n");
 		findSb.append("\t\tcondition.put(\"pageSize\", pageHolder.getPageSize());\n");
-		findSb.append("\t\tlong rowCount = "+Utils.delUnderline(tablename)+"Dao.get"+Tablename+"Count(condition);\n");
+		findSb.append("\t\tlong rowCount = "+Utils.delUnderline(tablename)+"Mapper.get"+Tablename+"Count(condition);\n");
 		findSb.append("\t\tpageHolder.setRowCount(rowCount);\n");
 		findSb.append("\t\tif(rowCount == 0){\n");
 		findSb.append("\t\t\treturn ;\n");
 		findSb.append("\t\t}\n");
-		findSb.append("\t\tList<Map<String, Object>> list = "+Utils.delUnderline(tablename)+"Dao.find"+Tablename+"ByCondition(condition);\n");
+		findSb.append("\t\tList<Map<String, Object>> list = "+Utils.delUnderline(tablename)+"Mapper.find"+Tablename+"ByCondition(condition);\n");
 		findSb.append("\t\tif(list != null && list.size() > 0){\n");
 		findSb.append("\t\t\tfor(int i=0; i<list.size(); i++){\n");
 		findSb.append("\t\t\t\tMap<String, Object> map = list.get(i);\n");
@@ -540,13 +540,12 @@ public class CreateMyBatisFileUtil {
 		String className = Utils.lowerFirstChar(Utils.delUnderline(tablename));
 		String TableName = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		String templateDaoXml = "\t<bean id=\""+className+"Mapper\" class=\"org.mybatis.spring.mapper.MapperFactoryBean\">\n";
-		templateDaoXml += "\t\t<property name=\"mapperInterface\" value=\"com.niiwoo.dao.mapper."+fileDir+"."+className+"Mapper\"></property>\n";
+		templateDaoXml += "\t\t<property name=\"mapperInterface\" value=\"com.niiwoo.dao.mapper."+fileDir+"."+TableName+"Mapper\"></property>\n";
 		templateDaoXml += "\t\t<property name=\"sqlSessionFactory\" ref=\"sqlSessionFactory\"></property>\n";
 		templateDaoXml += "\t</bean>\n";
 		String content = Utils.readFile(daoPath);
 		StringBuffer str = new StringBuffer(content);
 		str = str.insert(str.indexOf("</beans>"), templateDaoXml);
-		System.out.println(str);
 		Utils.writeFile(daoPath, String.valueOf(str));
 		
 		String templateAliax = "\t\t<typeAlias type=\"com.niiwoo.dao.model."+fileDir+"."+TableName+"\" alias=\""+className+"\" />\n";
@@ -556,13 +555,13 @@ public class CreateMyBatisFileUtil {
 		str = new StringBuffer(content);
 		str = str.insert(str.indexOf("\t</typeAliases>"), templateAliax);
 		str = str.insert(str.indexOf("\t</mappers>"), templateMapper);
-		System.out.println(str);
 		Utils.writeFile(configPath, String.valueOf(str));
 	}
 	
 	static String configPath = "";
 	static String daoPath = "";
 	static String fileDir = "";
+	static String realTableName = "";
 	
 	public static void main(String[] args) throws Exception {
 		Class.forName("com.mysql.jdbc.Driver");
@@ -574,10 +573,10 @@ public class CreateMyBatisFileUtil {
 		configPath = "D:\\workspace\\niiwoo-app\\niiwoo-dao\\src\\main\\resources\\mybatis-config.xml";
 		daoPath = "D:\\workspace\\niiwoo-app\\niiwoo-dao\\src\\main\\resources\\spring-dao.xml";
 		fileDir = "sys";
+		realTableName="tsys_manager";
+		CreateMyBatisFileUtil.createFile("sys_manager", "", conn, "utf-8");
 		
-		CreateMyBatisFileUtil.createFile("sys_role", "", conn, "utf-8");
-		
-		CreateMyBatisFileUtil.configurationXml("sys_role", configPath, daoPath);
+		CreateMyBatisFileUtil.configurationXml("sys_manager", configPath, daoPath);
 	}
 
 }
