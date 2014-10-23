@@ -393,7 +393,7 @@ public class CreateFileUtil {
 		findSb.append("\t\ttry {\n");
 		findSb.append("\t\t\treturn jdbcTemplate.queryForObject(sql.toString(), namedParameters, new BeanPropertyRowMapper<"+Tablename+">("+Tablename+".class));\n");
 		findSb.append("\t\t} catch (EmptyResultDataAccessException e) {\n");
-		findSb.append("\t\t\te.printStackTrace();\n");
+		findSb.append("\t\t\t//e.printStackTrace();\n");
 		findSb.append("\t\t}\n");
 		findSb.append("\t\treturn null;\n");
 		findSb.append("\t}\n\n");
@@ -414,7 +414,7 @@ public class CreateFileUtil {
 		findSb.append("\t\ttry {\n");
 		findSb.append("\t\t\treturn jdbcTemplate.queryForObject(sql.toString(), namedParameters, new BeanPropertyRowMapper<"+Tablename+">("+Tablename+".class));\n");
 		findSb.append("\t\t} catch (EmptyResultDataAccessException e) {\n");
-		findSb.append("\t\t\te.printStackTrace();\n");
+		findSb.append("\t\t\t//e.printStackTrace();\n");
 		findSb.append("\t\t}\n");
 		findSb.append("\t\treturn null;\n");
 		findSb.append("\t}\n\n");
@@ -614,9 +614,9 @@ public class CreateFileUtil {
 		Class.forName("com.mysql.jdbc.Driver");
 //		Connection conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
 //		CreateFileUtil.createFile("Student", "", conn, "utf-8");
-		Connection conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/hlatom", "atom", "123456");
-		DB_PREFIX = "hlatom.";
-		CreateFileUtil.createFile("sys_menu", "", conn, "utf-8");
+		Connection conn = DriverManager.getConnection("jdbc:mysql://192.168.8.203:3306/imserver", "root", "123456");
+		DB_PREFIX = "imserver.";
+		CreateFileUtil.createFile("groupInfo", "", conn, "utf-8");
 	}
 
 }
