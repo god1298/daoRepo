@@ -1,5 +1,7 @@
 package com.atom.util;
 
+
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -12,9 +14,18 @@ import java.sql.SQLException;
 import java.sql.Types;
 
 
+
 public class CreateFileUtil {
 	
 	public static String DB_PREFIX;
+	
+	public static String PACKAGE_PREFIX;
+	
+	public static String PACKAGE_PATH;
+	
+	public static String FILE_DIR;
+	
+	public static String REAL_TABLE_NAME;
 	
 	/**
 	 * 
@@ -33,18 +44,22 @@ public class CreateFileUtil {
 		String curdir = destPath;
 		if (curdir == null || "".equals(curdir.trim()))
 			curdir = System.getProperty("user.dir");
-		String entityFilePath = curdir + File.separator + Utils.upperFirstChar(Utils.delUnderline(tablename)) + ".java";
-		String daoImplFilePath = curdir + File.separator + Utils.upperFirstChar(Utils.delUnderline(tablename)) + "DaoImpl.java";
-		String daoFilePath = curdir + File.separator + Utils.upperFirstChar(Utils.delUnderline(tablename)) + "Dao.java";
-		
-		String serviceImplFilePath = curdir + File.separator + Utils.upperFirstChar(Utils.delUnderline(tablename)) + "ServiceImpl.java";
-		
+		String entityFilePath = curdir +"/src/main/java/"+PACKAGE_PATH +"/model/" +FILE_DIR+ File.separator + Utils.upperFirstChar(Utils.delUnderline(tablename)) + ".java";
+		String daoImplFilePath = curdir +"/src/main/java/"+PACKAGE_PATH +"/dao/" +FILE_DIR + File.separator + Utils.upperFirstChar(Utils.delUnderline(tablename)) + "DaoImpl.java";
+		String daoFilePath = curdir +"/src/main/java/"+PACKAGE_PATH +"/dao/" +FILE_DIR + File.separator + Utils.upperFirstChar(Utils.delUnderline(tablename)) + "Dao.java";
+		String serviceFilePath = curdir +"/src/main/java/"+PACKAGE_PATH +"/service/" +FILE_DIR + File.separator + Utils.upperFirstChar(Utils.delUnderline(tablename)) + "Service.java";
+		String serviceImplFilePath = curdir +"/src/main/java/"+PACKAGE_PATH +"/service/" +FILE_DIR + File.separator + Utils.upperFirstChar(Utils.delUnderline(tablename)) + "ServiceImpl.java";
+		String controllerFilePath = curdir +"/src/main/java/"+PACKAGE_PATH +"/controller/" +FILE_DIR + File.separator + Utils.upperFirstChar(Utils.delUnderline(tablename)) + "Controller.java";
 		File entityFile = new File(entityFilePath);
 		if (entityFile.exists()) {
 			entityFile.delete();
 			System.out.println(entityFile + " is delete!");
 			// System.out.println(entityFilePath + " is exist!");
 			// return; 
+		}else{
+			if (!entityFile.getParentFile().exists()) {  
+				entityFile.getParentFile().mkdirs();  
+            }
 		}
 		File daoFile = new File(daoFilePath);
 		if (daoFile.exists()) {
@@ -52,6 +67,10 @@ public class CreateFileUtil {
 			System.out.println(daoFile + " is delete!");
 //			System.out.println(daoFilePath + " is exist!");
 //			return;
+		}else{
+			if (!daoFile.getParentFile().exists()) {  
+				daoFile.getParentFile().mkdirs();  
+            }
 		}
 		File daoImplFile = new File(daoImplFilePath);
 		if (daoImplFile.exists()) {
@@ -59,6 +78,22 @@ public class CreateFileUtil {
 			System.out.println(daoImplFile + " is delete!");
 //			System.out.println(daoImplFilePath + " is exist!");
 //			return;
+		}else{
+			if (!daoImplFile.getParentFile().exists()) {  
+				daoImplFile.getParentFile().mkdirs();  
+            }
+		}
+		
+		File serviceFile = new File(serviceFilePath);
+		if (serviceFile.exists()) {
+			serviceFile.delete();
+			System.out.println(serviceFile + " is delete!");
+//			System.out.println(daoImplFilePath + " is exist!");
+//			return;
+		}else{
+			if (!serviceFile.getParentFile().exists()) {  
+				serviceFile.getParentFile().mkdirs();  
+            }
 		}
 		
 		File serviceImplFile = new File(serviceImplFilePath);
@@ -67,13 +102,30 @@ public class CreateFileUtil {
 			System.out.println(serviceImplFile + " is delete!");
 //			System.out.println(daoImplFilePath + " is exist!");
 //			return;
+		}else{
+			if (!serviceImplFile.getParentFile().exists()) {  
+				serviceImplFile.getParentFile().mkdirs();  
+            }
+		}
+		
+		File controllerFile = new File(controllerFilePath);
+		if (controllerFile.exists()) {
+			controllerFile.delete();
+			System.out.println(controllerFile + " is delete!");
+//			System.out.println(daoImplFilePath + " is exist!");
+//			return;
+		}else{
+			if (!controllerFile.getParentFile().exists()) {  
+				controllerFile.getParentFile().mkdirs();  
+            }
 		}
 		
 		FileOutputStream entityFos = null;
 		FileOutputStream daoFos = null;
 		FileOutputStream daoImplFos = null;
-		
+		FileOutputStream serviceFos = null;
 		FileOutputStream serviceImplFos = null;
+		FileOutputStream controllerFos = null;
 		try {
 			entityFos = new FileOutputStream(entityFile);
 			entityFos.write(fillContent4Entity(tablename, conn).toString().getBytes(charset));
@@ -87,10 +139,18 @@ public class CreateFileUtil {
 			serviceImplFos = new FileOutputStream(serviceImplFile);
 			serviceImplFos.write(fillContent4ServiceImpl(tablename, conn).toString().getBytes(charset));
 			
+			serviceFos = new FileOutputStream(serviceFile);
+			serviceFos.write(fillContent4Service(tablename, conn).toString().getBytes(charset));
+			
+			controllerFos = new FileOutputStream(controllerFile);
+			controllerFos.write(fillContent4Controller(tablename, conn).toString().getBytes(charset));
+			
 			entityFos.flush();
 			daoFos.flush();
 			daoImplFos.flush();
 			serviceImplFos.flush();
+			serviceFos.flush();
+			controllerFos.flush();
 		} catch(Exception e){
 			e.printStackTrace();
 		}finally {
@@ -98,6 +158,8 @@ public class CreateFileUtil {
 			if (daoFos != null)daoFos.close();
 			if (daoImplFos != null)daoImplFos.close();
 			if (serviceImplFos != null)serviceImplFos.close();
+			if (serviceFos != null)serviceFos.close();
+			if (controllerFos != null)controllerFos.close();
 		}
 		System.out.println("create " + entityFile + " successful");
 		System.out.println("create " + daoFile + " successful");
@@ -106,10 +168,11 @@ public class CreateFileUtil {
 	}
 	
 	static String fillContent4Entity(String tablename, Connection conn) throws SQLException {
-		String sql = "select * from " + tablename + " limit 1";
+		String sql = "select * from " + REAL_TABLE_NAME + " limit 1";
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		ResultSet rs = conn.prepareStatement(sql).executeQuery();
 		StringBuilder entitySb = new StringBuilder();
+		entitySb.append("package "+PACKAGE_PREFIX+".model."+FILE_DIR+";").append("\n\n");
 		entitySb.append("import java.io.Serializable;").append("\n");
 		entitySb.append("#BIGDECIMAL#");
 		entitySb.append("#STRING#");
@@ -186,13 +249,19 @@ public class CreateFileUtil {
 	
 	
 	static String fillContent4DaoImpl(String tablename, Connection conn) throws Exception {
-		String sql = "select * from " + tablename + " limit 1";
+		String sql = "select * from " + REAL_TABLE_NAME + " limit 1";
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		ResultSet rs = conn.prepareStatement(sql).executeQuery();
 		StringBuilder daoSb = new StringBuilder();
-		daoSb.append("\n");
+		daoSb.append("package "+PACKAGE_PREFIX+".dao."+FILE_DIR+";").append("\n\n");
+		daoSb.append("import "+PACKAGE_PREFIX+".model."+FILE_DIR+"."+Tablename+";\n");
 		daoSb.append("import java.util.List;\n");
 		daoSb.append("import java.util.Map;\n");
+		daoSb.append("import java.util.HashMap;\n");
+		daoSb.append("import org.springframework.dao.EmptyResultDataAccessException;\n");
+		daoSb.append("import org.springframework.jdbc.core.BeanPropertyRowMapper;\n");
+		daoSb.append("import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;\n");
+		daoSb.append("import java.sql.SQLException;\n");
 		daoSb.append("import javax.annotation.Resource;\n");
 		daoSb.append("import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;\n");
 		daoSb.append("import org.springframework.stereotype.Repository;\n");
@@ -231,7 +300,8 @@ public class CreateFileUtil {
 	static String fillContent4Dao(String tablename, Connection conn) throws Exception {
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		StringBuilder daoSb = new StringBuilder();
-		daoSb.append("\n");
+		daoSb.append("package "+PACKAGE_PREFIX+".dao."+FILE_DIR+";").append("\n\n");
+		daoSb.append("import "+PACKAGE_PREFIX+".model."+FILE_DIR+"."+Tablename+";\n");
 		daoSb.append("import java.util.List;\n");
 		daoSb.append("import java.util.Map;\n");
 		daoSb.append("\n");
@@ -242,7 +312,7 @@ public class CreateFileUtil {
 		daoSb.append("public interface " + Tablename  + "Dao").append("{\n\n");
 		daoSb.append("\tpublic int get").append(Tablename+"Count").append("(Map<String, Object> condition)throws Exception;\n");
 		daoSb.append("\tpublic List<Map<String, Object>> find").append(Tablename+"ByCondition").append("(Map<String, Object> condition)throws Exception;\n");
-		daoSb.append("\tpublic "+Tablename+" find").append(Tablename+"ById").append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
+		daoSb.append("\tpublic "+Tablename+" find").append(Tablename+"ByObj").append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
 		daoSb.append("\tpublic "+Tablename+" find").append(Tablename+"ById").append("(int id)throws Exception;\n");
 		daoSb.append("\tpublic int insert").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
 		daoSb.append("\tpublic int insert").append(Tablename+"AndGetKey").append("(final "+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
@@ -259,7 +329,7 @@ public class CreateFileUtil {
 		insertSb.append("\tpublic int insert").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception{\n");
 		insertSb.append("\t\tint rowCount = 0;\n");
 		insertSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
-		insertSb.append("\t\tsql.append(\"insert into "+DB_PREFIX+tablename+"\");\n");
+		insertSb.append("\t\tsql.append(\"insert into "+DB_PREFIX+REAL_TABLE_NAME+"\");\n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder sbKey = new StringBuilder();
 		StringBuilder sbValue = new StringBuilder();
@@ -285,7 +355,7 @@ public class CreateFileUtil {
 		StringBuilder insertSb = new StringBuilder();
 		insertSb.append("\tpublic int insert").append(Tablename+"AndGetKey").append("(final "+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception{\n");
 		insertSb.append("\t\tfinal StringBuilder sql = new StringBuilder(100);\n");
-		insertSb.append("\t\tsql.append(\"insert into "+DB_PREFIX+tablename+"\");\n");
+		insertSb.append("\t\tsql.append(\"insert into "+DB_PREFIX+REAL_TABLE_NAME+"\");\n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder sbKey = new StringBuilder();
 		StringBuilder sbValue = new StringBuilder();
@@ -320,24 +390,30 @@ public class CreateFileUtil {
 	
 	static String fillContent4Update(String tablename, ResultSet rs)throws Exception{
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
+		String classObjName = Utils.lowerFirstChar(Tablename);
 		StringBuilder updateSb = new StringBuilder();
-		updateSb.append("\tpublic int update").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception{\n");
+		updateSb.append("\tpublic int update").append(Tablename).append("("+Tablename+" "+classObjName+")throws Exception{\n");
 		updateSb.append("\t\tint rowCount = 0;\n");
 		updateSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
-		updateSb.append("\t\tsql.append(\"update "+DB_PREFIX+tablename+" set \");\n");
+		updateSb.append("\t\tsql.append(\"update "+DB_PREFIX+REAL_TABLE_NAME+" set \");\n");
 		ResultSetMetaData meta = rs.getMetaData();
-		StringBuilder sb = new StringBuilder();
+		// StringBuilder sb = new StringBuilder();
 		StringBuilder whereSb = new StringBuilder();
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
 			String columnName = meta.getColumnName(i);
 			String fileName = Utils.delUnderline(columnName);
-			sb.append(columnName+"=:"+fileName+",");
+			int javaType = meta.getColumnType(i);
+			String type = type2String(javaType);
+			updateSb.append("\t\tif("+classObjName+".get"+Utils.upperFirstChar(fileName)+"() != "+initField(type)+"){\n");
+			updateSb.append("\t\t\tsql.append(\""+columnName+"=:"+fileName+",\");\n");
+			updateSb.append("\t\t}\n");
 			if(i<3){
 				whereSb.append(" and "+columnName+"=:"+fileName);
 			}
 		}
-		sb.deleteCharAt(sb.length()-1);
-		updateSb.append("\t\tsql.append(\""+sb+"\");\n");
+		// sb.deleteCharAt(sb.length()-1);
+		// updateSb.append("\t\tsql.append(\""+sb+"\");\n");
+		updateSb.append("\t\tsql.deleteCharAt(sql.length()-1);\n");
 		updateSb.append("\t\tsql.append(\" where 1=1 \");\n");
 		updateSb.append("\t\tsql.append(\""+whereSb+"\");\n");
 		updateSb.append("\t\trowCount = jdbcTemplate.update(sql.toString(), new BeanPropertySqlParameterSource("+Utils.lowerFirstChar(Tablename)+"));\n");
@@ -352,7 +428,7 @@ public class CreateFileUtil {
 		deleteSb.append("\tpublic int delete").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception{\n");
 		deleteSb.append("\t\tint rowCount = 0;\n");
 		deleteSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
-		deleteSb.append("\t\tsql.append(\"delete from "+DB_PREFIX+tablename+" where 1=1 \");\n");
+		deleteSb.append("\t\tsql.append(\"delete from "+DB_PREFIX+REAL_TABLE_NAME+" where 1=1 \");\n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder sb = new StringBuilder();
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
@@ -373,9 +449,9 @@ public class CreateFileUtil {
 	static String fillContent4FindById(String tablename, ResultSet rs)throws Exception{
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		StringBuilder findSb = new StringBuilder();
-		findSb.append("\tpublic "+Tablename+" find").append(Tablename+"ById").append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception{\n");
+		findSb.append("\tpublic "+Tablename+" find").append(Tablename+"ByObj").append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception{\n");
 		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
-		findSb.append("\t\tsql.append(\"select * from "+DB_PREFIX+tablename+" where 1=1 ");
+		findSb.append("\t\tsql.append(\"select * from "+DB_PREFIX+REAL_TABLE_NAME+" where 1=1 ");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder whereSb = new StringBuilder();
 		StringBuilder valueSb = new StringBuilder();
@@ -406,7 +482,7 @@ public class CreateFileUtil {
 		StringBuilder findSb = new StringBuilder();
 		findSb.append("\tpublic "+Tablename+" find").append(Tablename+"ById").append("(int id)throws Exception{\n");
 		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
-		findSb.append("\t\tsql.append(\"select * from "+DB_PREFIX+tablename+" where 1=1 ");
+		findSb.append("\t\tsql.append(\"select * from "+DB_PREFIX+REAL_TABLE_NAME+" where 1=1 ");
 		StringBuilder whereSb = new StringBuilder();
 		findSb.append(whereSb).append("\");\n");
 		findSb.append("\t\tMap<String, Object> namedParameters = new HashMap<String, Object>();\n");
@@ -426,7 +502,7 @@ public class CreateFileUtil {
 		StringBuilder findSb = new StringBuilder();
 		findSb.append("\tpublic List<Map<String, Object>> find").append(Tablename+"ByCondition").append("(Map<String, Object> condition)throws Exception{\n");
 		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
-		findSb.append("\t\tsql.append(\"select * from "+DB_PREFIX+tablename+" where 1=1 \");\n");
+		findSb.append("\t\tsql.append(\"select * from "+DB_PREFIX+REAL_TABLE_NAME+" where 1=1 \");\n");
 		findSb.append("\t\tMap<String, Object> namedParameters = new HashMap<String, Object>();\n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder whereSb = new StringBuilder();
@@ -454,7 +530,7 @@ public class CreateFileUtil {
 		StringBuilder findSb = new StringBuilder();
 		findSb.append("\tpublic List<"+Tablename+"> find").append(Tablename+"ObjByCondition").append("(Map<String, Object> condition)throws Exception{\n");
 		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
-		findSb.append("\t\tsql.append(\"select * from "+DB_PREFIX+tablename+" where 1=1 \");\n");
+		findSb.append("\t\tsql.append(\"select * from "+DB_PREFIX+REAL_TABLE_NAME+" where 1=1 \");\n");
 		findSb.append("\t\tMap<String, Object> namedParameters = new HashMap<String, Object>();\n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder whereSb = new StringBuilder();
@@ -483,7 +559,7 @@ public class CreateFileUtil {
 		findSb.append("\tpublic int get").append(Tablename+"Count").append("(Map<String, Object> condition)throws Exception{\n");
 		findSb.append("\t\tint rowCount = 0;\n"); 
 		findSb.append("\t\tStringBuilder sql = new StringBuilder(100);\n");
-		findSb.append("\t\tsql.append(\"select count(1) from "+DB_PREFIX+tablename+" where 1=1 \");\n");
+		findSb.append("\t\tsql.append(\"select count(1) from "+DB_PREFIX+REAL_TABLE_NAME+" where 1=1 \");\n");
 		findSb.append("\t\tMap<String, Object> namedParameters = new HashMap<String, Object>();\n");
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder whereSb = new StringBuilder();
@@ -503,11 +579,14 @@ public class CreateFileUtil {
 	}
 	
 	static String fillContent4ServiceImpl(String tablename, Connection conn) throws Exception {
-		String sql = "select * from " + tablename + " limit 1";
+		String sql = "select * from " + REAL_TABLE_NAME + " limit 1";
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		ResultSet rs = conn.prepareStatement(sql).executeQuery();
 		StringBuilder daoSb = new StringBuilder();
-		daoSb.append("\n");
+		daoSb.append("package "+PACKAGE_PREFIX+".service."+FILE_DIR+";").append("\n\n");
+		daoSb.append("import "+PACKAGE_PREFIX+".dao."+FILE_DIR+"."+Tablename+"Dao;\n");
+		daoSb.append("import "+PACKAGE_PREFIX+".model."+FILE_DIR+"."+Tablename+";\n");
+		daoSb.append("import "+PACKAGE_PREFIX+".commons.vo.PageHolder;\n");
 		daoSb.append("import java.util.List;\n");
 		daoSb.append("import java.util.Map;\n");
 		daoSb.append("import javax.annotation.Resource;\n");
@@ -550,6 +629,60 @@ public class CreateFileUtil {
 		return findSb.toString();
 	}
 	
+	
+	static String fillContent4Service(String tablename, Connection conn) throws Exception {
+		// String sql = "select * from " + tablename + " limit 1";
+		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
+		// ResultSet rs = conn.prepareStatement(sql).executeQuery();
+		StringBuilder daoSb = new StringBuilder();
+		daoSb.append("package "+PACKAGE_PREFIX+".service."+FILE_DIR+";").append("\n\n");
+		daoSb.append("import "+PACKAGE_PREFIX+".model."+FILE_DIR+"."+Tablename+";\n");
+		daoSb.append("import java.util.List;\n");
+		daoSb.append("import java.util.Map;\n");
+		daoSb.append("\n");
+		daoSb.append("/**").append("\n");
+		daoSb.append(" * @date " + Utils.dateFormat() + "  service for table ").append(tablename).append("\n");
+		daoSb.append(" */").append("\n");
+		daoSb.append("public interface " + Tablename  + "Service").append("{\n\n");
+		daoSb.append("}");
+		String content = daoSb.toString();
+		return content;
+	}
+	
+	static String fillContent4Controller(String tablename, Connection conn) throws Exception {
+		// String sql = "select * from " + tablename + " limit 1";
+		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
+		String instancename = Utils.lowerFirstChar(Utils.delUnderline(tablename));
+		// ResultSet rs = conn.prepareStatement(sql).executeQuery();
+		StringBuilder daoSb = new StringBuilder();
+		daoSb.append("package "+PACKAGE_PREFIX+".controller."+FILE_DIR+";").append("\n\n");
+		daoSb.append("import javax.annotation.Resource;\n");
+		daoSb.append("import javax.servlet.http.HttpServletResponse;\n");
+		daoSb.append("import org.springframework.stereotype.Controller;\n");
+		daoSb.append("import org.springframework.web.bind.annotation.RequestMapping;\n");
+		daoSb.append("import "+PACKAGE_PREFIX+".service."+FILE_DIR+"."+Tablename+"Service;\n");
+		daoSb.append("import "+PACKAGE_PREFIX+".model."+FILE_DIR+"."+Tablename+";\n");
+		daoSb.append("import "+PACKAGE_PREFIX+".controller.BaseController;\n");
+		daoSb.append("import java.util.List;\n");
+		daoSb.append("import java.util.Map;\n");
+		daoSb.append("import java.util.ArrayList;\n");
+		daoSb.append("import java.util.HashMap;\n");
+		daoSb.append("\n");
+		daoSb.append("/**").append("\n");
+		daoSb.append(" * @date " + Utils.dateFormat() + "  controller for table ").append(tablename).append("\n");
+		daoSb.append(" */").append("\n");
+		daoSb.append("@Controller\n");
+		daoSb.append("@RequestMapping(\"/"+FILE_DIR+"\")\n");
+		daoSb.append("public class " + Tablename  + "Controller extends BaseController").append("{\n\n");
+		daoSb.append("\t@Resource(name = \""+instancename+"Service\")\n");
+		daoSb.append("\tprivate "+Tablename+"Service "+instancename+"Service;\n\n");
+		daoSb.append("\t@RequestMapping(value=\"hello_world\")\n");
+		daoSb.append("\tpublic void hello(HttpServletResponse response) throws Exception{\n\n");
+		daoSb.append("\t}\n");
+		daoSb.append("}");
+		String content = daoSb.toString();
+		return content;
+	}
 	
 	static String type2String(int javaType) {
 		switch (javaType) {
@@ -600,9 +733,11 @@ public class CreateFileUtil {
 		if ("java.math.BigDecimal".equals(type)) {
 			return "new java.math.BigDecimal(\"0\")";
 		} 
-//		else if ("int".equals(type)) {
-//			return "0";
-//		} 
+		else if ("int".equals(type)) {
+			return "-1";
+		}else if ("double".equals(type)) {
+			return "-1";
+		}
 		else {
 			return null;
 		}
@@ -614,9 +749,14 @@ public class CreateFileUtil {
 		Class.forName("com.mysql.jdbc.Driver");
 //		Connection conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
 //		CreateFileUtil.createFile("Student", "", conn, "utf-8");
-		Connection conn = DriverManager.getConnection("jdbc:mysql://192.168.8.203:3306/imserver", "root", "123456");
-		DB_PREFIX = "imserver.";
-		CreateFileUtil.createFile("groupInfo", "", conn, "utf-8");
+		Connection conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
+		// DB_PREFIX = "kaojinweixin.";
+		PACKAGE_PREFIX = "com.grow.coach";
+		PACKAGE_PATH = "com/grow/coach";
+		FILE_DIR = "student";
+		REAL_TABLE_NAME="grow_coach_teacher";
+		DB_PREFIX="";
+		CreateFileUtil.createFile("teacher", "", conn, "utf-8");
 	}
 
 }
