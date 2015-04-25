@@ -553,8 +553,8 @@ public class CreateMyBatisFileUtil {
 		
 		content = Utils.readFile(configPath);
 		str = new StringBuffer(content);
-		str = str.insert(str.indexOf("\t</typeAliases>"), templateAliax);
-		str = str.insert(str.indexOf("\t</mappers>"), templateMapper);
+		str = str.insert(str.indexOf("</typeAliases>"), templateAliax);
+		str = str.insert(str.indexOf("</mappers>"), templateMapper);
 		Utils.writeFile(configPath, String.valueOf(str));
 	}
 	
