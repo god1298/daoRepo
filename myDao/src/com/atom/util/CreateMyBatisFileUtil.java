@@ -16,6 +16,12 @@ public class CreateMyBatisFileUtil {
 	
 	public static String DB_PREFIX;
 	
+	public static String NAMESPACE_prefix;
+	
+	public static String typeAlias_prefix;
+	
+	public static String mapper_prefix;
+	
 	/**
 	 * 
 	 * @param tablename
@@ -192,7 +198,7 @@ public class CreateMyBatisFileUtil {
 		StringBuilder daoSb = new StringBuilder();
 		daoSb.append("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
 		daoSb.append("<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"http://mybatis.org/dtd/mybatis-3-mapper.dtd\" >\n");
-		daoSb.append("<mapper namespace=\"com.niiwoo.dao.mapper."+(fileDir+".")+Tablename+"Mapper\" >\n\n");
+		daoSb.append("<mapper namespace=\""+NAMESPACE_prefix+"."+Tablename+"Mapper\" >\n\n");
 		daoSb.append(fillContent4ResultMap(tablename, rs));
 		daoSb.append(fillContent4GetCountByCondition(tablename, rs));
 		daoSb.append(fillContent4FindByCondition(tablename, rs));
@@ -200,6 +206,7 @@ public class CreateMyBatisFileUtil {
 		daoSb.append(fillContent4FindById(tablename, rs));
 		daoSb.append(fillContent4FindByIdInt(tablename, rs));
 		daoSb.append(fillContent4Insert(tablename, rs));
+		daoSb.append(fillContent4InsertAndGetKey(tablename, rs));
 		daoSb.append(fillContent4Update(tablename, rs));
 		daoSb.append(fillContent4Delete(tablename, rs));
 		daoSb.append("</mapper>");
@@ -214,11 +221,12 @@ public class CreateMyBatisFileUtil {
 		daoSb.append("\n");
 		daoSb.append("import java.util.List;\n");
 		daoSb.append("import java.util.Map;\n");
+		daoSb.append("import org.springframework.stereotype.Repository;\n");
 		daoSb.append("\n");
 		daoSb.append("/**").append("\n");
 		daoSb.append(" * @date " + Utils.dateFormat() + "  dao for table ").append(tablename).append("\n");
 		daoSb.append(" */").append("\n");
-	
+		daoSb.append("@Repository(\""+Utils.delUnderline(tablename)+"Dao\")\n");
 		daoSb.append("public interface " + Tablename  + "Mapper").append("{\n\n");
 		daoSb.append("\tpublic int get").append(Tablename+"Count").append("(Map<String, Object> condition)throws Exception;\n");
 		daoSb.append("\tpublic List<Map<String, Object>> find").append(Tablename+"ByCondition").append("(Map<String, Object> condition)throws Exception;\n");
@@ -226,6 +234,7 @@ public class CreateMyBatisFileUtil {
 		daoSb.append("\tpublic "+Tablename+" find").append(Tablename+"ByObj").append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
 		daoSb.append("\tpublic "+Tablename+" find").append(Tablename+"ById").append("(int id)throws Exception;\n");
 		daoSb.append("\tpublic int insert").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
+		daoSb.append("\tpublic int insert").append(Tablename).append("AndGetKey("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
 		daoSb.append("\tpublic int update").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
 		daoSb.append("\tpublic int delete").append(Tablename).append("("+Tablename+" "+Utils.lowerFirstChar(Tablename)+")throws Exception;\n");
 		daoSb.append("}");
@@ -234,6 +243,30 @@ public class CreateMyBatisFileUtil {
 	}
 	
 	static String fillContent4Insert(String tablename, ResultSet rs)throws Exception{
+		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
+		String className = Utils.lowerFirstChar(Utils.delUnderline(tablename));
+		StringBuilder insertSb = new StringBuilder();
+		ResultSetMetaData meta = rs.getMetaData();
+		StringBuilder sbKey = new StringBuilder();
+		StringBuilder sbValue = new StringBuilder();
+		for (int i = 1; i <= meta.getColumnCount(); i++) {
+			String columnName = meta.getColumnName(i);
+			String fileName = Utils.delUnderline(columnName);
+			sbKey.append(columnName+",");
+			sbValue.append("#{"+fileName+"},");
+		}
+		insertSb.append("\t<insert id=\"insert").append(Tablename+"\" parameterType=\""+className+"\">\n");
+		insertSb.append("\t\tinsert into "+DB_PREFIX+realTableName+"\n");
+		sbKey.deleteCharAt(sbKey.length()-1);
+		sbValue.deleteCharAt(sbValue.length()-1);
+		insertSb.append("\t\t("+sbKey.toString()).append(")\n");
+		insertSb.append("\t\tvalues\n");
+		insertSb.append("\t\t(").append(sbValue.toString()).append(")\n");
+		insertSb.append("\t</insert>\n\n");
+		return insertSb.toString();
+	}
+	
+	static String fillContent4InsertAndGetKey(String tablename, ResultSet rs)throws Exception{
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		String className = Utils.lowerFirstChar(Utils.delUnderline(tablename));
 		StringBuilder insertSb = new StringBuilder();
@@ -250,7 +283,7 @@ public class CreateMyBatisFileUtil {
 			sbKey.append(columnName+",");
 			sbValue.append("#{"+fileName+"},");
 		}
-		insertSb.append("\t<insert id=\"insert").append(Tablename+"\" parameterType=\""+className+"\" useGeneratedKeys=\"true\" keyProperty=\""+primaryKeyStr+"\">\n");
+		insertSb.append("\t<insert id=\"insert").append(Tablename+"AndGetKey\" parameterType=\""+className+"\" useGeneratedKeys=\"true\" keyProperty=\""+primaryKeyStr+"\">\n");
 		insertSb.append("\t\tinsert into "+DB_PREFIX+realTableName+"\n");
 		sbKey.deleteCharAt(sbKey.length()-1);
 		sbValue.deleteCharAt(sbValue.length()-1);
@@ -261,25 +294,33 @@ public class CreateMyBatisFileUtil {
 		return insertSb.toString();
 	}
 	
+	
 	static String fillContent4Update(String tablename, ResultSet rs)throws Exception{
 		String Tablename = Utils.upperFirstChar(Utils.delUnderline(tablename));
 		String className = Utils.lowerFirstChar(Utils.delUnderline(tablename));
 		StringBuilder updateSb = new StringBuilder();
 		ResultSetMetaData meta = rs.getMetaData();
 		StringBuilder sb = new StringBuilder();
+		for (int i = 1; i <= meta.getColumnCount(); i++) {
+			String columnName = meta.getColumnName(i);
+			String fileName = Utils.delUnderline(columnName);
+			sb.append("\t\t<if test=\""+fileName+" != null\">\n");
+			sb.append("\t\t\t,"+columnName+"=#{"+fileName+"}\n");
+			sb.append("\t\t</if>\n");
+		}
 		StringBuilder whereSb = new StringBuilder();
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
 			String columnName = meta.getColumnName(i);
 			String fileName = Utils.delUnderline(columnName);
-			sb.append(columnName+"=#{"+fileName+"},");
+			// sb.append(columnName+"=#{"+fileName+"},");
 			if(i<3){
 				whereSb.append(" and "+columnName+"=#{"+fileName+"}");
 			}
 		}
 		updateSb.append("\t<update id=\"update").append(Tablename+"\" parameterType=\""+className+"\" >\n");
-		updateSb.append("\t\tupdate "+DB_PREFIX+realTableName+" set\n");
-		sb.deleteCharAt(sb.length()-1);
-		updateSb.append("\t\t"+sb+"\n");
+		updateSb.append("\t\tupdate "+DB_PREFIX+realTableName+" set 1=1\n");
+		// sb.deleteCharAt(sb.length()-1);
+		updateSb.append(""+sb+"\n");
 		updateSb.append("\t\twhere 1=1 \n");
 		updateSb.append("\t\t"+whereSb+"\n");
 		updateSb.append("\t</update>\n\n");
@@ -486,15 +527,15 @@ public class CreateMyBatisFileUtil {
 		case Types.NUMERIC:
 			return "BigDecimal";
 		case Types.SMALLINT:
-			return "Integer";
+			return "int";
 		case Types.TINYINT:
-			return "Integer";
+			return "int";
 		case Types.INTEGER:
-			return "Integer";
+			return "int";
 		case Types.DOUBLE:
-			return "Double";
+			return "double";
 		case Types.FLOAT:
-			return "Float";
+			return "float";
 		case Types.REAL:
 			return "BigDecimal";
 		case Types.TIMESTAMP:
@@ -528,9 +569,11 @@ public class CreateMyBatisFileUtil {
 		if ("java.math.BigDecimal".equals(type)) {
 			return "new java.math.BigDecimal(\"0\")";
 		} 
-//		else if ("int".equals(type)) {
-//			return "0";
-//		} 
+		else if ("int".equals(type)) {
+			return "-1";
+		}else if ("double".equals(type)) {
+			return "-1";
+		}
 		else {
 			return null;
 		}
@@ -546,10 +589,10 @@ public class CreateMyBatisFileUtil {
 		String content = Utils.readFile(daoPath);
 		StringBuffer str = new StringBuffer(content);
 		str = str.insert(str.indexOf("</beans>"), templateDaoXml);
-		Utils.writeFile(daoPath, String.valueOf(str));
+		// Utils.writeFile(daoPath, String.valueOf(str));
 		
-		String templateAliax = "\t\t<typeAlias type=\"com.niiwoo.dao.model."+fileDir+"."+TableName+"\" alias=\""+className+"\" />\n";
-		String templateMapper = "\t\t<mapper resource=\"com/niiwoo/dao/mapping/"+fileDir+"/"+TableName+"Mapper.xml\" />\n";
+		String templateAliax = "\t\t<typeAlias type=\""+typeAlias_prefix+"."+TableName+"\" alias=\""+className+"\" />\n";
+		String templateMapper = "\t\t<mapper resource=\""+mapper_prefix+"/"+TableName+"Mapper.xml\" />\n";
 		
 		content = Utils.readFile(configPath);
 		str = new StringBuffer(content);
@@ -567,16 +610,22 @@ public class CreateMyBatisFileUtil {
 		Class.forName("com.mysql.jdbc.Driver");
 //		Connection conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
 //		CreateFileUtil.createFile("Student", "", conn, "utf-8");
-		Connection conn = DriverManager.getConnection("jdbc:mysql://192.168.1.25:3306/niiwoo", "niiwoowrite", "tuandai123");
-		DB_PREFIX = "niiwoo.";
+		Connection conn = DriverManager.getConnection("jdbc:mysql://192.168.0.142:3306/account", "wq_account", "lstx");
+		DB_PREFIX = "";
+		NAMESPACE_prefix = "com.woqu.vas.dao";
+		typeAlias_prefix = "com.woqu.vas.dto";
+		mapper_prefix = "mybatis";
 		
-		configPath = "D:\\workspace\\niiwoo-app\\niiwoo-dao\\src\\main\\resources\\mybatis-config.xml";
-		daoPath = "D:\\workspace\\niiwoo-app\\niiwoo-dao\\src\\main\\resources\\spring-dao.xml";
-		fileDir = "sys";
-		realTableName="tsys_manager";
-		CreateMyBatisFileUtil.createFile("sys_manager", "", conn, "utf-8");
+		// configPath = "D:\\workspace\\niiwoo-app\\niiwoo-dao\\src\\main\\resources\\mybatis-config.xml";
+		// daoPath = "D:\\workspace\\niiwoo-app\\niiwoo-dao\\src\\main\\resources\\spring-dao.xml";
+		configPath = "D:\\workspace\\virtual_account_service\\src\\main\\resources\\spring\\SqlMapConfig.xml";
+		daoPath = "D:\\workspace\\virtual_account_service\\src\\main\\resources\\spring\\applicationContext-dataSource.xml";
 		
-		CreateMyBatisFileUtil.configurationXml("sys_manager", configPath, daoPath);
+		// fileDir = "sys";
+		realTableName="t_vas_withdraw_apply";
+		CreateMyBatisFileUtil.createFile("withdraw_apply", "", conn, "utf-8");
+		
+		CreateMyBatisFileUtil.configurationXml("withdraw_apply", configPath, daoPath);
 	}
 
 }
