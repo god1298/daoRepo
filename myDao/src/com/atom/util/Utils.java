@@ -72,13 +72,66 @@ public class Utils {
 	}
 	
 	public static void writeFile(String path, String content)throws Exception{
-		FileWriter fw = new FileWriter(path);
-		BufferedWriter bw = new BufferedWriter(fw);
-		bw.write(content);
-		bw.flush();
-		fw.flush();
-		fw.close();
-		bw.close();
+//		FileWriter fw = new FileWriter(path);
+//		BufferedWriter bw = new BufferedWriter(fw);
+//		bw.write(content);
+//		bw.flush();
+//		fw.flush();
+//		fw.close();
+//		bw.close();
+		FileOutputStream fos = new FileOutputStream(path);
+		fos.write(content.toString().getBytes("UTF-8"));
+		fos.flush();
+		fos.close();
+	}
+
+
+	public static String fieldType2ClassType(String fieldType) {
+		if(fieldType.indexOf("(") != -1){
+			fieldType=fieldType.substring(0, fieldType.indexOf("("));
+		}
+		switch (fieldType) {
+			case "tinyint":
+				return "int";
+			case "smallint":
+				return "int";
+			case "mediumint":
+				return "int";
+			case "int":
+				return "int";
+			case "integer":
+				return "long";
+			case "bigint":
+				return "BigInteger";
+			case "bit":
+				return "boolean";
+			case "real":
+				return "BigDecimal";
+			case "double":
+				return "double";
+			case "float":
+				return "float";
+			case "decimal":
+				return "BigDecimal";
+			case "numeric":
+				return "BigDecimal";
+			case "char":
+				return "String";
+			case "varchar":
+				return "String";
+			case "date":
+				return "String";
+			case "time":
+				return "Time";
+			case "year":
+				return "Date";
+			case "timestamp":
+				return "Timestamp";
+			case "datetime":
+				return "Date";
+			default:
+				return "String";
+		}
 	}
 	
 	public static void main(String[] args)throws Exception {

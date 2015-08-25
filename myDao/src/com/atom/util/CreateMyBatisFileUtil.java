@@ -122,7 +122,7 @@ public class CreateMyBatisFileUtil {
 		entitySb.append("#DATE#");
 		entitySb.append("\n");
 		entitySb.append("/**").append("\n");
-		entitySb.append(" * @date " + Utils.dateFormat() + "  entity for table ").append(tablename).append("\n");
+		entitySb.append(" * @date " + Utils.dateFormat() + "  entity for table ").append(realTableName).append("\n");
 		entitySb.append(" */").append("\n");
 	
 		entitySb.append("public class " + Tablename  + " implements Serializable{").append("\n");
@@ -224,9 +224,9 @@ public class CreateMyBatisFileUtil {
 		daoSb.append("import org.springframework.stereotype.Repository;\n");
 		daoSb.append("\n");
 		daoSb.append("/**").append("\n");
-		daoSb.append(" * @date " + Utils.dateFormat() + "  dao for table ").append(tablename).append("\n");
+		daoSb.append(" * @date " + Utils.dateFormat() + "  dao for table ").append(realTableName).append("\n");
 		daoSb.append(" */").append("\n");
-		daoSb.append("@Repository(\""+Utils.delUnderline(tablename)+"Dao\")\n");
+		daoSb.append("@Repository(\""+Utils.delUnderline(tablename)+"Mapper\")\n");
 		daoSb.append("public interface " + Tablename  + "Mapper").append("{\n\n");
 		daoSb.append("\tpublic int get").append(Tablename+"Count").append("(Map<String, Object> condition)throws Exception;\n");
 		daoSb.append("\tpublic List<Map<String, Object>> find").append(Tablename+"ByCondition").append("(Map<String, Object> condition)throws Exception;\n");
@@ -304,9 +304,11 @@ public class CreateMyBatisFileUtil {
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
 			String columnName = meta.getColumnName(i);
 			String fileName = Utils.delUnderline(columnName);
-			sb.append("\t\t<if test=\""+fileName+" != null\">\n");
-			sb.append("\t\t\t,"+columnName+"=#{"+fileName+"}\n");
-			sb.append("\t\t</if>\n");
+			int javaType = meta.getColumnType(i);
+			String type = type2String(javaType);
+			sb.append("\t\t\t<if test=\""+fileName+" != "+initField(type)+"\">\n");
+			sb.append("\t\t\t\t"+columnName+"=#{"+fileName+"},\n");
+			sb.append("\t\t\t</if>\n");
 		}
 		StringBuilder whereSb = new StringBuilder();
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
@@ -318,9 +320,11 @@ public class CreateMyBatisFileUtil {
 			}
 		}
 		updateSb.append("\t<update id=\"update").append(Tablename+"\" parameterType=\""+className+"\" >\n");
-		updateSb.append("\t\tupdate "+DB_PREFIX+realTableName+" set 1=1\n");
+		updateSb.append("\t\tupdate "+DB_PREFIX+realTableName+" \n");
+		updateSb.append("\t\t<set>\n");
 		// sb.deleteCharAt(sb.length()-1);
 		updateSb.append(""+sb+"\n");
+		updateSb.append("\t\t</set>\n");
 		updateSb.append("\t\twhere 1=1 \n");
 		updateSb.append("\t\t"+whereSb+"\n");
 		updateSb.append("\t</update>\n\n");
@@ -592,12 +596,12 @@ public class CreateMyBatisFileUtil {
 		// Utils.writeFile(daoPath, String.valueOf(str));
 		
 		String templateAliax = "\t\t<typeAlias type=\""+typeAlias_prefix+"."+TableName+"\" alias=\""+className+"\" />\n";
-		String templateMapper = "\t\t<mapper resource=\""+mapper_prefix+"/"+TableName+"Mapper.xml\" />\n";
+		String templateMapper = "\t<mapper resource=\""+mapper_prefix+"/"+TableName+"Mapper.xml\" />\n";
 		
 		content = Utils.readFile(configPath);
 		str = new StringBuffer(content);
-		str = str.insert(str.indexOf("</typeAliases>"), templateAliax);
-		str = str.insert(str.indexOf("</mappers>"), templateMapper);
+		str = str.insert(str.indexOf("\t\t</typeAliases>"), templateAliax);
+		str = str.insert(str.indexOf("\t</mappers>"), templateMapper);
 		Utils.writeFile(configPath, String.valueOf(str));
 	}
 	
@@ -610,22 +614,23 @@ public class CreateMyBatisFileUtil {
 		Class.forName("com.mysql.jdbc.Driver");
 //		Connection conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
 //		CreateFileUtil.createFile("Student", "", conn, "utf-8");
-		Connection conn = DriverManager.getConnection("jdbc:mysql://192.168.0.142:3306/account", "wq_account", "lstx");
+		Connection conn = DriverManager.getConnection("jdbc:mysql://192.168.0.142:3306/market", "wq_market", "lstx");
 		DB_PREFIX = "";
-		NAMESPACE_prefix = "com.woqu.vas.dao";
-		typeAlias_prefix = "com.woqu.vas.dto";
+		NAMESPACE_prefix = "com.tourstock.marketing.dao.buying";
+		typeAlias_prefix = "com.tourstock.marketing.api.model.buying";
 		mapper_prefix = "mybatis";
 		
 		// configPath = "D:\\workspace\\niiwoo-app\\niiwoo-dao\\src\\main\\resources\\mybatis-config.xml";
 		// daoPath = "D:\\workspace\\niiwoo-app\\niiwoo-dao\\src\\main\\resources\\spring-dao.xml";
-		configPath = "D:\\workspace\\virtual_account_service\\src\\main\\resources\\spring\\SqlMapConfig.xml";
-		daoPath = "D:\\workspace\\virtual_account_service\\src\\main\\resources\\spring\\applicationContext-dataSource.xml";
 		
+//		configPath = "D:\\workspace\\virtual_account_service\\src\\main\\resources\\spring\\SqlMapConfig.xml";
+//		daoPath = "D:\\workspace\\virtual_account_service\\src\\main\\resources\\spring\\applicationContext-dataSource.xml";
+//		
 		// fileDir = "sys";
-		realTableName="t_vas_withdraw_apply";
-		CreateMyBatisFileUtil.createFile("withdraw_apply", "", conn, "utf-8");
+		realTableName="t_buying_remind";
+		CreateMyBatisFileUtil.createFile("buying_remind", "", conn, "utf-8");
 		
-		CreateMyBatisFileUtil.configurationXml("withdraw_apply", configPath, daoPath);
+		// CreateMyBatisFileUtil.configurationXml("t_vas_password", configPath, daoPath);
 	}
 
 }
