@@ -17,6 +17,8 @@ public class TableClass {
 	// 字段对象列表
 	private List<ColumnField> columnFieldList;
 
+	private ColumnField primaryColumnField;
+
 	public TableClass(String tablename) {
 		this.tablename = tablename;
 		this.classname = Utils.upperFirstChar(Utils.delUnderline(this.tablename));
@@ -104,9 +106,20 @@ public class TableClass {
 			columnField.setPrivileges(privileges);
 			columnField.setFieldComment(fieldComment);
 			columnFieldList.add(columnField);
+			if("PRI".equals(keyType)){
+				this.setPrimaryColumnField(columnField);
+			}
 		}
 		this.setTablename(tablename);
 		this.setColumnFieldList(columnFieldList);
 		this.setClassname(classname);
+	}
+
+	public void setPrimaryColumnField(ColumnField primaryColumnField) {
+		this.primaryColumnField = primaryColumnField;
+	}
+
+	public ColumnField getPrimaryColumnField() {
+		return primaryColumnField;
 	}
 }

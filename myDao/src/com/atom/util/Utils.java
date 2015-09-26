@@ -126,7 +126,7 @@ public class Utils {
 			case "year":
 				return "Date";
 			case "timestamp":
-				return "Timestamp";
+				return "Date";
 			case "datetime":
 				return "Date";
 			default:

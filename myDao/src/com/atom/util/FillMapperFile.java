@@ -213,7 +213,7 @@ public class FillMapperFile {
             whereSb.append("\t\t\tWHERE(\""+fieldName+"=#{"+classFieldName+"}\");\n");
             whereSb.append("\t\t}\n");
         }
-        whereSb.append("\t\tStringBuilder sql= new  StringBuilder(SQL());");
+        whereSb.append("\t\tStringBuilder sql= new  StringBuilder(SQL());\n");
         whereSb.append("\t\tif(condition.get(\"limit\") != null){\n");
         whereSb.append("\t\t\tsql.append(\" limit #{rowOffset},#{pageSize}\");\n");
         whereSb.append("\t\t}\n");
@@ -238,7 +238,7 @@ public class FillMapperFile {
             whereSb.append("\t\t\tWHERE(\""+fieldName+"=#{"+classFieldName+"}\");\n");
             whereSb.append("\t\t}\n");
         }
-        whereSb.append("\t\tStringBuilder sql= new  StringBuilder(SQL());");
+        whereSb.append("\t\tStringBuilder sql= new  StringBuilder(SQL());\n");
         whereSb.append("\t\tif(condition.get(\"limit\") != null){\n");
         whereSb.append("\t\t\tsql.append(\" limit #{rowOffset},#{pageSize}\");\n");
         whereSb.append("\t\t}\n");
@@ -305,7 +305,7 @@ public class FillMapperFile {
         daoSb.append("\tpublic List<"+tableClass.getClassname()+"> findEntityByCondition(Map<String, Object> condition)throws Exception;\n");
 
         daoSb.append("\t@SelectProvider(type = "+tableClass.getClassname()+"MapperProvider.class, method = \"findByEntitySql\")\n");
-        daoSb.append("\tpublic "+tableClass.getClassname()+" findByEntity(PromoProject promoProject)throws Exception;\n");
+        daoSb.append("\tpublic "+tableClass.getClassname()+" findByEntity("+tableClass.getClassname()+" "+tableClass.getClassInstanceName()+")throws Exception;\n");
 
         daoSb.append("\t@SelectProvider(type = "+tableClass.getClassname()+"MapperProvider.class, method = \"findByIdSql\")\n");
         daoSb.append("\tpublic "+tableClass.getClassname()+" findById(int id)throws Exception;\n");
@@ -314,7 +314,7 @@ public class FillMapperFile {
         daoSb.append("\tpublic int insert("+tableClass.getClassname()+" "+tableClass.getClassInstanceName()+")throws Exception;\n");
 
         daoSb.append("\t@InsertProvider(type = "+tableClass.getClassname()+"MapperProvider.class, method = \"insertAndGetKeySql\")\n");
-        daoSb.append("\t@SelectKey(before = false, keyProperty = \"projectId\", resultType = Integer.class, statementType = StatementType.PREPARED, statement = \"SELECT LAST_INSERT_ID() AS projectId\")\n");
+        daoSb.append("\t@SelectKey(before = false, keyProperty = \""+tableClass.getPrimaryColumnField().getClassFieldName()+"\", resultType = Integer.class, statementType = StatementType.PREPARED, statement = \"SELECT LAST_INSERT_ID() AS "+tableClass.getPrimaryColumnField().getClassFieldName()+"\")\n");
         daoSb.append("\tpublic int insertAndGetKey("+tableClass.getClassname()+" "+tableClass.getClassInstanceName()+")throws Exception;\n");
 
         daoSb.append("\t@UpdateProvider(type = "+tableClass.getClassname()+"MapperProvider.class, method = \"updateSql\")\n");
