@@ -619,7 +619,7 @@ public class CreateMyBatisFileUtil {
 		NAMESPACE_prefix = "com.tourstock.marketing.dao.buying";
 		typeAlias_prefix = "com.tourstock.marketing.api.model.buying";
 		mapper_prefix = "mybatis";
-		
+		System.out.println("test haha");
 		// configPath = "D:\\workspace\\niiwoo-app\\niiwoo-dao\\src\\main\\resources\\mybatis-config.xml";
 		// daoPath = "D:\\workspace\\niiwoo-app\\niiwoo-dao\\src\\main\\resources\\spring-dao.xml";
 		
