@@ -1,6 +1,5 @@
 package com.atom.util;
 
-import java.awt.print.Pageable;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.List;
@@ -9,7 +8,8 @@ import java.util.List;
  * Created by Administrator on 2015/8/22.
  */
 public class FillEntityFile {
-
+    // 1表示创建基本类型 2表示创建包装类型 默认为基本类型
+    static int fieldType=1;
 
     static String fillContent4Entity(TableClass tableClass, String packagePath) throws SQLException {
         StringBuilder entitySb = new StringBuilder();
@@ -44,10 +44,10 @@ public class FillEntityFile {
             }else if("Date".equals(classFieldType)){
                 dateFlag = true;
             }
-            String initField = initField(classFieldType);
-            sb4args.append("\t//").append(columnField.getFieldComment()).append("PRI".equals(columnField.getKeyType())?" 数据库主键":"").append(" db:defaultValue:"+(columnField.getDefaultValue()==""?"emptyString":columnField.getDefaultValue())).append("\n");
-            if (initField != null){
-                sb4args.append("\tprivate ").append(classFieldType + " ").append("" + classFieldName + " = ").append(initField).append(";").append("\n");
+            String defaultClassValue = columnField.getDefaultClassValue();
+            sb4args.append("\t//").append(columnField.getFieldComment()).append("PRI".equals(columnField.getKeyType())?" 数据库主键" : "").append(" db:defaultValue:" + (columnField.getDefaultValue() == "" ? "emptyString" : columnField.getDefaultValue())).append("\n");
+            if (defaultClassValue != null){
+                sb4args.append("\tprivate ").append(classFieldType + " ").append("" + classFieldName + " = ").append(defaultClassValue).append(";").append("\n");
             }else{
                 sb4args.append("\tprivate ").append(classFieldType + " ").append("" + classFieldName + "").append(";").append("\n");
             }
@@ -84,25 +84,9 @@ public class FillEntityFile {
     }
 
 
-    static String initField(String classFieldType) {
-        if ("BigDecimal".equals(classFieldType)) {
-            return "new java.math.BigDecimal(\"0\")";
-        }
-        else if ("int".equals(classFieldType)) {
-            return "-1";
-        }else if ("double".equals(classFieldType)) {
-            return "-1";
-        }else if ("float".equals(classFieldType)) {
-            return "-1";
-        }
-        else {
-            return null;
-        }
-    }
-
-
     static void write2File(TableClass tableClass, String packagePath, String filePath)throws Exception{
         String entityFileContent = fillContent4Entity(tableClass, packagePath);
         Utils.writeFile(filePath+File.separator+tableClass.getClassname()+".java", entityFileContent);
     }
+
 }

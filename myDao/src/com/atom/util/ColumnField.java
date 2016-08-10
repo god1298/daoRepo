@@ -13,8 +13,10 @@ public class ColumnField {
     private String isAllowNull;
     // 数据库索引类型
     private String keyType;
-    // 默认值
+    // 数据库默认值
     private String defaultValue;
+    // 类默认值
+    private String defaultClassValue;
     // 扩展 如 自增主键
     private String extra;
     // 权限
@@ -25,6 +27,8 @@ public class ColumnField {
     private String classFieldName;
     // 类字段类型
     private String classFieldType;
+    // 完整的字段类型即带包名
+    private String fullClassFieldType;
 
     public String getFieldName() {
         return fieldName;
@@ -100,5 +104,21 @@ public class ColumnField {
 
     public String getClassFieldType() {
         return classFieldType;
+    }
+
+    public String getDefaultClassValue() {
+        return defaultClassValue;
+    }
+
+    public void setDefaultClassValue(String defaultClassValue) {
+        this.defaultClassValue = defaultClassValue;
+    }
+
+    public String getFullClassFieldType() {
+        return fullClassFieldType;
+    }
+
+    public void setFullClassFieldType(String fullClassFieldType) {
+        this.fullClassFieldType = fullClassFieldType;
     }
 }

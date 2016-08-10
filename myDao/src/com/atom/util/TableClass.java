@@ -98,10 +98,13 @@ public class TableClass {
 			ColumnField columnField = new ColumnField();
 			columnField.setFieldName(fieldName);
 			columnField.setFieldType(fieldType);
+            columnField.setClassFieldType(getClassFieldType(fieldType));
+            columnField.setFullClassFieldType(getFullClassFieldType(columnField.getClassFieldType()));
 			columnField.setCollation(collation);
 			columnField.setIsAllowNull(isAllowNull);
 			columnField.setKeyType(keyType);
 			columnField.setDefaultValue(defaultValue);
+            columnField.setDefaultClassValue(getClassFieldDefaultValue(columnField.getClassFieldType()));
 			columnField.setExtra(extra);
 			columnField.setPrivileges(privileges);
 			columnField.setFieldComment(fieldComment);
@@ -114,6 +117,81 @@ public class TableClass {
 		this.setColumnFieldList(columnFieldList);
 		this.setClassname(classname);
 	}
+
+
+    static int classFieldTypeFlag = 1;
+    static String getClassFieldType(String fieldType){
+        if(classFieldTypeFlag == 1){
+            if ( fieldType.indexOf("char") > -1 ) {
+                return "String";
+            } else if ( fieldType.indexOf("bigint") > -1 ) {
+                return "long";
+            } else if ( fieldType.indexOf("int") > -1 ) {
+                return "int";
+            } else if ( fieldType.indexOf("date") > -1 ) {
+                return "Date";
+            } else if ( fieldType.indexOf("text") > -1 ) {
+                return "String";
+            } else if ( fieldType.indexOf("timestamp") > -1 ) {
+                return "Date";
+            } else if ( fieldType.indexOf("bit") > -1 ) {
+                return "boolean";
+            } else if ( fieldType.indexOf("decimal") > -1 ) {
+                return "BigDecimal";
+            } else if ( fieldType.indexOf("blob") > -1 ) {
+                return "byte[]";
+            }
+        }else{
+            if ( fieldType.indexOf("char") > -1 ) {
+                return "String";
+            } else if ( fieldType.indexOf("bigint") > -1 ) {
+                return "Long";
+            } else if ( fieldType.indexOf("int") > -1 ) {
+                return "Integer";
+            } else if ( fieldType.indexOf("date") > -1 ) {
+                return "Date";
+            } else if ( fieldType.indexOf("text") > -1 ) {
+                return "String";
+            } else if ( fieldType.indexOf("timestamp") > -1 ) {
+                return "Date";
+            } else if ( fieldType.indexOf("bit") > -1 ) {
+                return "Boolean";
+            } else if ( fieldType.indexOf("decimal") > -1 ) {
+                return "BigDecimal";
+            } else if ( fieldType.indexOf("blob") > -1 ) {
+                return "byte[]";
+            }
+        }
+        return null;
+    }
+
+    static String getFullClassFieldType(String classFieldType){
+        if(classFieldTypeFlag != 1){
+            return "java.lang."+classFieldType;
+        }
+        return null;
+    }
+
+
+    static String getClassFieldDefaultValue(String classFieldType){
+        if(classFieldTypeFlag == 1){
+            if ("BigDecimal".equals(classFieldType)) {
+                return "new java.math.BigDecimal(\"0\")";
+            }
+            else if ("int".equals(classFieldType)) {
+                return "-1";
+            }else if ("double".equals(classFieldType)) {
+                return "-1";
+            }else if ("float".equals(classFieldType)) {
+                return "-1";
+            }else if("boolean".equals(classFieldType)){
+                return "false";
+            }else if("long".equals(classFieldType)){
+                return "-1l";
+            }
+        }
+        return null;
+    }
 
 	public void setPrimaryColumnField(ColumnField primaryColumnField) {
 		this.primaryColumnField = primaryColumnField;
