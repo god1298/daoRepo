@@ -88,27 +88,40 @@ public class FillMapperXmlFile {
 
 
 
-    static String fillContent4InsertAndGetKey(TableClass tableClass)throws Exception{
+        static String fillContent4InsertAndGetKey(TableClass tableClass)throws Exception{
         StringBuilder insertSb = new StringBuilder();
         insertSb.append("\t<insert id=\"insertAndGetKey\" parameterType=\"" + parameterClassType + "\" useGeneratedKeys=\"true\" keyProperty=\"" + tableClass.getPrimaryColumnField().getClassFieldName() + "\">\n");
         insertSb.append("\t\tinsert into "+tableClass.getTablename()+"\n");
         StringBuilder sbKey = new StringBuilder();
+        sbKey.append("\t\t<trim prefix=\"(\" suffix=\")\" suffixOverrides=\",\">\n");
         StringBuilder sbValue = new StringBuilder();
+        sbValue.append("\t\t<trim prefix=\"(\" suffix=\")\" suffixOverrides=\",\">\n");
         for (ColumnField columnField : tableClass.getColumnFieldList()) {
             String fieldName = columnField.getFieldName();
             String classFieldName = columnField.getClassFieldName();
-            sbKey.append(fieldName+",");
-            if("auto_increment".equals(columnField.getExtra())){
-                sbValue.append("null,");
-            }else{
-                sbValue.append("#{" + classFieldName + "},");
-            }
+            sbKey.append("\t\t\t<if test=\""+classFieldName+" != null\">\n");
+            sbKey.append("\t\t\t\t"+fieldName+",\n");
+            sbKey.append("\t\t\t</if>\n");
+            //            if("auto_increment".equals(columnField.getExtra())){
+            //                sbValue.append("null,");
+            //            }else{
+            //                sbValue.append("#{"+classFieldName+"},");
+            //            }
+            sbValue.append("\t\t\t<if test=\""+classFieldName+" != null\">\n");
+            sbValue.append("\t\t\t\t#{"+columnField.getClassFieldName()+"},\n");
+            sbValue.append("\t\t\t</if>\n");
         }
-        sbKey.deleteCharAt(sbKey.length()-1);
-        sbValue.deleteCharAt(sbValue.length()-1);
-        insertSb.append("\t\t("+sbKey.toString()).append(")\n");
+//        sbKey.deleteCharAt(sbKey.length()-1);
+//        sbValue.deleteCharAt(sbValue.length()-1);
+//        insertSb.append("\t\t("+sbKey.toString()).append(")\n");
+//        insertSb.append("\t\tvalues\n");
+//        insertSb.append("\t\t(").append(sbValue.toString()).append(")\n");
+//        insertSb.append("\t</insert>\n\n");
+        sbKey.append("\t\t</trim>\n");
+        sbValue.append("\t\t</trim>\n");
+        insertSb.append(""+sbKey.toString()).append("");
         insertSb.append("\t\tvalues\n");
-        insertSb.append("\t\t(").append(sbValue.toString()).append(")\n");
+        insertSb.append("").append(sbValue.toString()).append("");
         insertSb.append("\t</insert>\n\n");
         return insertSb.toString();
     }
@@ -119,26 +132,34 @@ public class FillMapperXmlFile {
         insertSb.append("\t<insert id=\"insert\" parameterType=\""+parameterClassType+"\">\n");
         insertSb.append("\t\tinsert into "+tableClass.getTablename()+"\n");
         StringBuilder sbKey = new StringBuilder();
+        sbKey.append("\t\t<trim prefix=\"(\" suffix=\")\" suffixOverrides=\",\">\n");
         StringBuilder sbValue = new StringBuilder();
+        sbValue.append("\t\t<trim prefix=\"(\" suffix=\")\" suffixOverrides=\",\">\n");
         for (ColumnField columnField : tableClass.getColumnFieldList()) {
             String fieldName = columnField.getFieldName();
             String classFieldName = columnField.getClassFieldName();
-            sbKey.append(fieldName+",");
-            if("auto_increment".equals(columnField.getExtra())){
-                sbValue.append("null,");
-            }else{
-                sbValue.append("#{"+classFieldName+"},");
-            }
+            sbKey.append("\t\t\t<if test=\""+classFieldName+" != null\">\n");
+            sbKey.append("\t\t\t\t"+fieldName+",\n");
+            sbKey.append("\t\t\t</if>\n");
+//            if("auto_increment".equals(columnField.getExtra())){
+//                sbValue.append("null,");
+//            }else{
+//                sbValue.append("#{"+classFieldName+"},");
+//            }
+            sbValue.append("\t\t\t<if test=\""+classFieldName+" != null\">\n");
+            sbValue.append("\t\t\t\t#{"+columnField.getClassFieldName()+"},\n");
+            sbValue.append("\t\t\t</if>\n");
         }
-        sbKey.deleteCharAt(sbKey.length()-1);
-        sbValue.deleteCharAt(sbValue.length()-1);
-        insertSb.append("\t\t("+sbKey.toString()).append(")\n");
+        sbKey.append("\t\t</trim>\n");
+        sbValue.append("\t\t</trim>\n");
+//        sbKey.deleteCharAt(sbKey.length()-1);
+//        sbValue.deleteCharAt(sbValue.length()-1);
+        insertSb.append(""+sbKey.toString()).append("");
         insertSb.append("\t\tvalues\n");
-        insertSb.append("\t\t(").append(sbValue.toString()).append(")\n");
+        insertSb.append("").append(sbValue.toString()).append("");
         insertSb.append("\t</insert>\n\n");
         return insertSb.toString();
     }
-
 
     static String fillContent4FindByEntity(TableClass tableClass)throws Exception{
         StringBuilder findSb = new StringBuilder();
